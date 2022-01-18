@@ -1,0 +1,58 @@
+KECCAK_DIR := keccak
+KECCAK_SRC := $(wildcard $(KECCAK_DIR)/*.c)
+KECCAK_OBJ := $(patsubst $(KECCAK_DIR)/%.c,$(KECCAK_DIR)/%.o, $(KECCAK_SRC))
+
+.PHONY: clean softclean
+
+ifeq ($(OS),Windows_NT)
+ PLATFORM="Windows"
+else
+ ifeq ($(shell uname),Darwin)
+  PLATFORM="MacOS"
+  BOOST_INCLUDE := -isystem /Users/baixingqiang/.hunter/_Base/0216540/be1450d/0cbf1b4/Install/include
+ else
+  PLATFORM="Unix-Like"
+ endif
+endif
+
+# rudimentary
+all: libsoufflenum.a num_tests mappings_tests keccak256_tests
+
+libsoufflenum.a: $(KECCAK_OBJ) num256.o mappings.o keccak256.o
+	ar rs libsoufflenum.a $(KECCAK_OBJ) num256.o mappings.o keccak256.o
+	ln -sf libsoufflenum.a libfunctors.a
+
+num256.o: num256.cpp
+	g++ -std=c++17 -O2 num256.cpp -c -fPIC -o num256.o $(BOOST_INCLUDE)
+
+num_tests:	num256.cpp num256_test.cpp
+	g++ -std=c++17 -o num_tests num256_test.cpp $(BOOST_INCLUDE)
+	./num_tests
+
+mappings.o: mappings.cpp
+	g++ -std=c++17 -O2 mappings.cpp -c -fPIC -o mappings.o $(BOOST_INCLUDE)
+
+mappings_tests:	mappings.cpp mappings_test.cpp
+	g++ -std=c++17 -o mappings_tests mappings_test.cpp $(BOOST_INCLUDE)
+	# ./mappings_tests
+
+keccak256.o: keccak256.cpp
+	g++ -std=c++17 -O2 keccak256.cpp -c -fPIC -o keccak256.o $(BOOST_INCLUDE)
+
+keccak256_test.o: keccak256_test.cpp keccak256.cpp
+	g++ -std=c++17 -O2 -c -o keccak256_test.o keccak256_test.cpp $(BOOST_INCLUDE)
+
+keccak256_tests: keccak256_test.o $(KECCAK_OBJ)
+	g++ -std=c++17 keccak256_test.o $(KECCAK_OBJ) -o keccak256_tests
+	./keccak256_tests
+
+$(KECCAK_DIR)/%.o: $(KECCAK_DIR)/%.c $(KECCAK_SRC)
+	gcc -O2 -c -fPIC -o $@ $<
+
+softclean:
+	rm -f $(KECCAK_OBJ)
+	rm -f *.o
+
+clean: softclean
+	rm -f libsoufflenum.a libfunctors.a
+	rm -f keccak256_tests num_tests mappings_tests
