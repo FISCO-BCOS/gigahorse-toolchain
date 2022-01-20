@@ -5,9 +5,17 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 current_dir="$(pwd)"
 output_dir=bin/
 flags="-static -fopenmp"
+sed_cmd="sed -i"
+base64_cmd="base64 -w0"
+arch="base64_$(uname -m)_tar"
 
 if [ "$(uname)" == "Darwin" ];then
     flags=""
+    sed_cmd="sed -i ''"
+    base64_cmd="base64"
+    if [ "$(uname -m)" == "arm64" ];then
+        arch="base64_aarch64_tar"
+    fi
 fi
 
 download_compile_souffle() {
@@ -17,6 +25,7 @@ download_compile_souffle() {
         tar -zxf souffle-2.2.tar.gz
     fi
     cd souffle-2.2
+    ${sed_cmd} 's/-Werror/-Wno-error/g' src/CMakeLists.txt
     mkdir -p build && cd build
     cmake -DSOUFFLE_USE_SQLITE=off -DSOUFFLE_USE_ZLIB=off -DBUILD_TESTING=off -DSOUFFLE_USE_CURSES=off \
         -DSOUFFLE_ENABLE_TESTING=off -DSOUFFLE_USE_OPENMP=on -DCMAKE_BUILD_TYPE=Release ..
@@ -45,13 +54,18 @@ compile_gigahorse() {
 }
 
 generate_static_analysis_script() {
-    echo "TODO"
+    cp dist/generatefacts ${output_dir}/
     cd ${output_dir}
     tar -jcf tools.tar.bz2 ./*
-
+    base64_str="$(${base64_cmd} tools.tar.bz2)"
+    cd $current_dir
+    ${sed_cmd} 's/${arch}=/${arch}="${base64_str}"/g' evm_static_analysis.sh
+    ${sed_cmd} 's/OS=/OS=$(uname)/g' evm_static_analysis.sh
 }
 
 main() {
+    pip3 install pyinstaller
+    pyinstaller -Fs generatefacts
     export PATH=$current_dir/souffle-2.2/build/src:$PATH
     if [ ! -f $current_dir/souffle-2.2/build/src/souffle ];then
         download_compile_souffle

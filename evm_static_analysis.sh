@@ -2,7 +2,6 @@
 set -e
 
 OS=
-arch=
 use_sm3=
 analysis_tools_path="$HOME/.fisco/static_analysis_tools/"
 tools_tar="${analysis_tools_path}/tools.tar.gz"
@@ -34,9 +33,9 @@ check_env() {
     if [ "$local_OS" != "${OS}" ];then
         LOG_ERROR "The target OS is ${OS}, but the current OS is ${local_OS}"
     fi
-    if [ "$local_arch" != "${arch}" ];then
-        LOG_ERROR "The target arch is ${arch}, but the current arch is ${local_arch}"
-    fi
+    # if [ "$local_arch" != "${arch}" ];then
+    #     LOG_ERROR "The target arch is ${arch}, but the current arch is ${local_arch}"
+    # fi
 }
 
 parse_params() {
@@ -55,9 +54,11 @@ prepare_analysis_tools() {
     if [[ ! -f "${main_bin}" || ! -f "${function_inliner_bin}" || ! -f "${simple_conflict_analysis_bin}" || ! -f "${gigahorse_generate}" ]];then
         mkdir -p "${analysis_tools_path}"
         if [[ "arch" == "aarch64" || ! -z "${force_aarch64}" ]];then
-            base64_tar=""
+            base64_aarch64_tar=
+            base64_tar="${base64_aarch64_tar}"
         else # x86_64
-            base64_tar=""
+            base64_x86_64_tar=
+            base64_tar="${base64_x86_64_tar}"
         fi
         echo ${base64_tar} | base64 -d - > ${tools_tar}
         tar -zxf ${tools_tar} -C "${analysis_tools_path}" && rm ${tools_tar}
@@ -90,7 +91,7 @@ main() {
     mkdir -p ${temp_ouput_dir}/out
     ln -s ${temp_ouput_dir}/bytecode.hex ${temp_ouput_dir}/out/bytecode.hex
     ${main_bin} --facts=${temp_ouput_dir}/ --output=${temp_ouput_dir}/out
-    for i in [0..3];do
+    for i in {0..3};do
         ${function_inliner_bin} --facts=${temp_ouput_dir}/out --output=${temp_ouput_dir}/out
     done
     ${simple_conflict_analysis_bin} --facts=${temp_ouput_dir}/out --output=${temp_ouput_dir}/out

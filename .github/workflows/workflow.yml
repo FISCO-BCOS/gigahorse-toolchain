@@ -1,0 +1,62 @@
+name: FISCO-BCOS GitHub Actions
+on:
+  push:
+    branches-ignore:
+      - "**-1.3"
+      - "**-1.5"
+    tags-ignore:
+      - v1.*
+    paths-ignore:
+      - "docs/**"
+      - "Changelog.md"
+      - "README.md"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "Changelog.md"
+      - "README.md"
+  release:
+    types: [published, created, edited]
+env:
+  CCACHE_DIR: ${{ github.workspace }}/ccache
+
+jobs:
+  build:
+    name: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-latest]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 5
+          submodules: true
+      # - name: check commit
+      #   if: ${{ runner.os == 'Linux' && github.base_ref != 'master' && github.event_name == 'pull_request' }}
+      #   run: bash tools/ci/check-commit.sh
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: souffle-2.2
+          key: deps-v1-${{ runner.temp }}-${{ github.base_ref }}-${{ hashFiles('.github/workflows/workflow.yml') }}
+          restore-keys: |
+            deps-v1-${{ runner.temp }}-${{ github.base_ref }}-${{ hashFiles('.github/workflows/workflow.yml') }}
+            deps-v1-${{ runner.temp }}-${{ github.base_ref }}-
+            deps-v1-${{ runner.temp }}-
+      - name: install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install openssl@1.1 ccache gmp cmake bison libffi mcpp pkg-config boost mcpp
+      - name: install Ubuntu dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt install -y git wget build-essential clang cmake libssl-dev zlib1g-dev ccache mcpp libgmp-dev flex bison patch libffi-dev libboost-all-dev python3-setuptools python3-wheel
+      - name: compile
+        run: bash prepare_gigahorse.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: tools-${{ runner.os }}.tar.gz
+          path: bin/tools.tar.bz2
+      - uses: actions/upload-artifact@v2
+        with:
+          name: evm_static_analysis-${{ runner.os }}.sh
+          path: evm_static_analysis.sh
