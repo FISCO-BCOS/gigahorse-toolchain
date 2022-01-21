@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-OS=
+OS=""
 use_sm3=
 analysis_tools_path="$HOME/.fisco/static_analysis_tools/"
 tools_tar="${analysis_tools_path}/tools.tar.gz"
 main_bin="${analysis_tools_path}/main_compiled"
 function_inliner_bin="${analysis_tools_path}/function_inliner_compiled"
 simple_conflict_analysis_bin="${analysis_tools_path}/simple_conflict_analysis_compiled"
-gigahorse_generate="${analysis_tools_path}/generate"
+gigahorse_generate="${analysis_tools_path}/generatefacts"
 force_aarch64=""
 
 LOG_WARN() {
@@ -53,16 +53,19 @@ parse_params() {
 prepare_analysis_tools() {
     if [[ ! -f "${main_bin}" || ! -f "${function_inliner_bin}" || ! -f "${simple_conflict_analysis_bin}" || ! -f "${gigahorse_generate}" ]];then
         mkdir -p "${analysis_tools_path}"
+        base64_aarch64_tar=
+        base64_x86_64_tar=
         if [[ "arch" == "aarch64" || ! -z "${force_aarch64}" ]];then
-            base64_aarch64_tar=
             base64_tar="${base64_aarch64_tar}"
         else # x86_64
-            base64_x86_64_tar=
             base64_tar="${base64_x86_64_tar}"
         fi
         echo ${base64_tar} | base64 -d - > ${tools_tar}
         tar -zxf ${tools_tar} -C "${analysis_tools_path}" && rm ${tools_tar}
-        chmod a+rx ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
+        chmod u+rx ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
+        if [ "${OS}" == "Darwin" ];then
+            xattr -d com.apple.quarantine ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
+        fi
     fi
 }
 
@@ -83,17 +86,19 @@ exit 0
 
 main() {
     check_env
-    parse_params "$@"
-    # TODO: analysis process
+    parse_params $@
     temp_ouput_dir="${analysis_tools_path}/temp"
     rm -rf "${temp_ouput_dir}" && mkdir -p ${temp_ouput_dir}
+    prepare_analysis_tools
     ${gigahorse_generate} ${opcodes} ${temp_ouput_dir}/
     mkdir -p ${temp_ouput_dir}/out
-    ln -s ${temp_ouput_dir}/bytecode.hex ${temp_ouput_dir}/out/bytecode.hex
-    ${main_bin} --facts=${temp_ouput_dir}/ --output=${temp_ouput_dir}/out
+    result_dir="${temp_ouput_dir}/out"
+    ln -s ${temp_ouput_dir}/bytecode.hex ${result_dir}/bytecode.hex
+    ${main_bin} --facts=${temp_ouput_dir}/ --output=${result_dir}
     for i in {0..3};do
-        ${function_inliner_bin} --facts=${temp_ouput_dir}/out --output=${temp_ouput_dir}/out
+        ${function_inliner_bin} --facts=${result_dir} --output=${result_dir}
     done
-    ${simple_conflict_analysis_bin} --facts=${temp_ouput_dir}/out --output=${temp_ouput_dir}/out
+    ${simple_conflict_analysis_bin} --facts=${result_dir} --output=${result_dir}
 }
 
+main $@

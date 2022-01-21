@@ -7,14 +7,16 @@ output_dir=bin/
 flags="-static -fopenmp"
 sed_cmd="sed -i"
 base64_cmd="base64 -w0"
-arch="base64_$(uname -m)_tar"
+OS=$(uname)
+arch=$(uname -m)
+base64_str_var_name="base64_${arch}_tar"
 
 if [ "$(uname)" == "Darwin" ];then
     flags=""
     sed_cmd="sed -i ''"
     base64_cmd="base64"
     if [ "$(uname -m)" == "arm64" ];then
-        arch="base64_aarch64_tar"
+        base64_str_var_name="base64_aarch64_tar"
     fi
 fi
 
@@ -59,8 +61,12 @@ generate_static_analysis_script() {
     tar -jcf tools.tar.bz2 ./*
     base64_str="$(${base64_cmd} tools.tar.bz2)"
     cd $current_dir
-    ${sed_cmd} 's/${arch}=/${arch}="${base64_str}"/g' evm_static_analysis.sh
-    ${sed_cmd} 's/OS=/OS=$(uname)/g' evm_static_analysis.sh
+    ${sed_cmd} -f - evm_static_analysis.sh <<EOF
+s#${base64_str_var_name}=#${base64_str_var_name}=\"${base64_str}\"#g
+EOF
+    ${sed_cmd} -f - evm_static_analysis.sh <<EOF
+s#OS=#OS=${OS}#g
+EOF
 }
 
 main() {
