@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-OS=""
+OS=
 use_sm3=
 analysis_tools_path="$HOME/.fisco/static_analysis_tools/"
 tools_tar="${analysis_tools_path}/tools.tar.gz"
@@ -84,18 +84,29 @@ EOF
 exit 0
 }
 
+parse_runtime_codes() {
+    local codes=$1
+    local codes_str="$(cat ${codes})"
+    codes_str=${codes_str#*6000396000f3}
+    runtime_code_str=${codes_str:2}
+}
+
 main() {
     check_env
     parse_params $@
     temp_ouput_dir="${analysis_tools_path}/temp"
+    runtime_code="${temp_ouput_dir}/runtime_bin"
     rm -rf "${temp_ouput_dir}" && mkdir -p ${temp_ouput_dir}
+    parse_runtime_codes $opcodes
+    echo ${runtime_code_str} > ${runtime_code}
     prepare_analysis_tools
-    ${gigahorse_generate} ${opcodes} ${temp_ouput_dir}/
+    ${gigahorse_generate} ${runtime_code} ${temp_ouput_dir}/
+    # echo "8" > ${temp_ouput_dir}/MaxContextDepth.csv
     mkdir -p ${temp_ouput_dir}/out
     result_dir="${temp_ouput_dir}/out"
     ln -s ${temp_ouput_dir}/bytecode.hex ${result_dir}/bytecode.hex
     ${main_bin} --facts=${temp_ouput_dir}/ --output=${result_dir}
-    for i in {0..3};do
+    for i in {0..3}; do
         ${function_inliner_bin} --facts=${result_dir} --output=${result_dir}
     done
     ${simple_conflict_analysis_bin} --facts=${result_dir} --output=${result_dir}
