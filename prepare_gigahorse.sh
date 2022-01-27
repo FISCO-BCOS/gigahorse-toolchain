@@ -69,6 +69,14 @@ s#OS=#OS=\"${OS}\"#g
 EOF
 }
 
+compile_conflict_analysis() {
+    echo "Compiling conflict analysis"
+    cd tools/conflicts_info_parse
+    cargo build --release
+    cp target/release/conflicts_info_parse ../../../${output_dir}/
+    cd $current_dir
+}
+
 main() {
     pip3 install pyinstaller
     pyinstaller -Fs generatefacts

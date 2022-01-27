@@ -1,3 +1,6 @@
 [submodule "souffle-addon"]
 	path = souffle-addon
 	url = git@github.com:plast-lab/souffle-addon.git 
+[submodule "tools/conflicts_info_parse"]
+	path = tools/conflicts_info_parse
+	url = https://github.com/bxq2011hust/conflicts_info_parse.git

@@ -50,6 +50,11 @@ jobs:
       - name: install Ubuntu dependencies
         if: runner.os == 'Linux'
         run: sudo apt install -y git wget build-essential clang cmake libssl-dev zlib1g-dev ccache mcpp libgmp-dev flex bison patch libffi-dev libboost-all-dev python3-setuptools python3-wheel
+      - name: install rust language
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2021-06-17
+          override: true
       - name: compile
         run: bash prepare_gigahorse.sh
       - uses: actions/upload-artifact@v2

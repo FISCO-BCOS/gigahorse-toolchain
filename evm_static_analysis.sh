@@ -9,6 +9,7 @@ main_bin="${analysis_tools_path}/main_compiled"
 function_inliner_bin="${analysis_tools_path}/function_inliner_compiled"
 simple_conflict_analysis_bin="${analysis_tools_path}/simple_conflict_analysis_compiled"
 gigahorse_generate="${analysis_tools_path}/generatefacts"
+conflicts_info_parse="${analysis_tools_path}/conflicts_info_parse"
 force_aarch64=""
 
 LOG_WARN() {
@@ -39,11 +40,12 @@ check_env() {
 }
 
 parse_params() {
-    while getopts "a:b:gA" option;do
+    while getopts "a:b:go:A" option;do
         case $option in
         a) abi_json=$OPTARG;;
         b) opcodes=$OPTARG;;
-        g) use_sm3="true";;
+        g) use_sm3="-g";;
+        o) temp_ouput_dir="$OPTARG";;
         A) force_aarch64="true";;
         h) help;;
         esac
@@ -94,7 +96,11 @@ parse_runtime_codes() {
 main() {
     check_env
     parse_params $@
-    temp_ouput_dir="${analysis_tools_path}/temp"
+    if [ -z "${temp_ouput_dir}" ];then
+        temp_ouput_dir="${analysis_tools_path}/analysis_result"
+        rm -rf "${temp_ouput_dir}"
+        mkdir -p ${temp_ouput_dir}
+    fi
     runtime_code="${temp_ouput_dir}/runtime_bin"
     rm -rf "${temp_ouput_dir}" && mkdir -p ${temp_ouput_dir}
     parse_runtime_codes $opcodes
@@ -102,14 +108,15 @@ main() {
     prepare_analysis_tools
     ${gigahorse_generate} ${runtime_code} ${temp_ouput_dir}/
     # echo "8" > ${temp_ouput_dir}/MaxContextDepth.csv
-    mkdir -p ${temp_ouput_dir}/out
-    result_dir="${temp_ouput_dir}/out"
+    result_dir="${temp_ouput_dir}/result_csvs"
+    mkdir -p ${result_dir}
     ln -s ${temp_ouput_dir}/bytecode.hex ${result_dir}/bytecode.hex
     ${main_bin} --facts=${temp_ouput_dir}/ --output=${result_dir}
     for i in {0..3}; do
         ${function_inliner_bin} --facts=${result_dir} --output=${result_dir}
     done
     ${simple_conflict_analysis_bin} --facts=${result_dir} --output=${result_dir}
+    ${conflicts_info_parse} -p ${result_dir} -a ${abi_json} ${use_sm3}
 }
 
 main $@
