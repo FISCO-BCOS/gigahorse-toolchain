@@ -22,7 +22,7 @@ env:
 
 jobs:
   build:
-    name: build
+    name: build on x86_64
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -46,7 +46,7 @@ jobs:
             deps-v1-${{ runner.temp }}-
       - name: install macOS dependencies
         if: runner.os == 'macOS'
-        run: brew install openssl@1.1 ccache gmp cmake bison libffi mcpp pkg-config boost mcpp
+        run: brew install openssl@1.1 ccache gmp cmake bison libffi mcpp pkg-config boost
       - name: install Ubuntu dependencies
         if: runner.os == 'Linux'
         run: sudo apt install -y git wget build-essential clang cmake libssl-dev zlib1g-dev ccache mcpp libgmp-dev flex bison patch libffi-dev libboost-all-dev python3-setuptools python3-wheel
@@ -63,5 +63,47 @@ jobs:
           path: bin/tools.tar.bz2
       - uses: actions/upload-artifact@v2
         with:
-          name: evm_static_analysis-${{ runner.os }}.sh
+          name: evm_static_analysis-${{ runner.os }}-${{ runner.arch }}.sh
+          path: evm_static_analysis.sh
+
+  build_aarch64:
+    name: build on aarch64 ubuntu
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.1.0
+        with:
+          fetch-depth: 5
+          submodules: true
+      - uses: uraimo/run-on-arch-action@v2.1.1
+        name: Run commands
+        id: runcmd
+        with:
+          arch: aarch64
+          distro: ubuntu18.04
+
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          githubToken: ${{ github.token }}
+          dockerRunArgs: |
+            --volume "${PWD}:/data"
+          install: |
+            apt-get update -q -y
+            apt remove -y --purge --auto-remove cmake
+            apt install -y software-properties-common lsb-release && apt clean all
+            apt install -y git wget build-essential clang libssl-dev zlib1g-dev ccache mcpp libgmp-dev flex bison patch libffi-dev libboost-all-dev python3-setuptools python3-wheel curl python3-pip wget
+            wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+            apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
+            apt -y update && apt install -y kitware-archive-keyring && apt update -y && apt install -y cmake
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+          run: |
+            uname -a
+            source $HOME/.cargo/env
+            bash prepare_gigahorse.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: tools-${{ runner.os }}-aarch64.tar.gz
+          path: bin/tools.tar.bz2
+      - uses: actions/upload-artifact@v2
+        with:
+          name: evm_static_analysis-${{ runner.os }}-aarch64.sh
           path: evm_static_analysis.sh
