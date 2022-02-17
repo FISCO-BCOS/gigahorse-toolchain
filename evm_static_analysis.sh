@@ -29,10 +29,10 @@ LOG_ERROR() {
 }
 
 check_env() {
-    local local_OS=$(uname)
-    local local_arch=$(uname -m)
-    if [ "$local_OS" != "${OS}" ];then
-        LOG_ERROR "The target OS is ${OS}, but the current OS is ${local_OS}"
+    local local_platform="$(uname)"
+    local local_arch="$(uname -m)"
+    if [ "$local_platform" != "${OS}" ];then
+        LOG_ERROR "The target OS is ${OS}, but the current OS is ${local_platform}"
     fi
     # if [ "$local_arch" != "${arch}" ];then
     #     LOG_ERROR "The target arch is ${arch}, but the current arch is ${local_arch}"
@@ -40,7 +40,7 @@ check_env() {
 }
 
 parse_params() {
-    while getopts "a:b:go:A" option;do
+    while getopts "a:b:go:Ah" option;do
         case $option in
         a) abi_json=$OPTARG;;
         b) opcodes=$OPTARG;;
