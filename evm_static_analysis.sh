@@ -10,7 +10,7 @@ function_inliner_bin="${analysis_tools_path}/function_inliner_compiled"
 simple_conflict_analysis_bin="${analysis_tools_path}/simple_conflict_analysis_compiled"
 gigahorse_generate="${analysis_tools_path}/generatefacts"
 conflicts_info_parse="${analysis_tools_path}/conflicts_info_parse"
-force_aarch64=""
+local_arch="$(uname -m)"
 
 LOG_WARN() {
     local content=${1}
@@ -30,23 +30,18 @@ LOG_ERROR() {
 
 check_env() {
     local local_platform="$(uname)"
-    local local_arch="$(uname -m)"
     if [ "$local_platform" != "${OS}" ];then
         LOG_ERROR "The target OS is ${OS}, but the current OS is ${local_platform}"
     fi
-    # if [ "$local_arch" != "${arch}" ];then
-    #     LOG_ERROR "The target arch is ${arch}, but the current arch is ${local_arch}"
-    # fi
 }
 
 parse_params() {
-    while getopts "a:b:go:Ah" option;do
+    while getopts "a:b:go:h" option;do
         case $option in
         a) abi_json=$OPTARG;;
         b) opcodes=$OPTARG;;
         g) use_sm3="-g";;
         o) temp_ouput_dir="$OPTARG";;
-        A) force_aarch64="true";;
         h) help;;
         esac
     done
@@ -57,10 +52,12 @@ prepare_analysis_tools() {
         mkdir -p "${analysis_tools_path}"
         base64_aarch64_tar=
         base64_x86_64_tar=
-        if [[ "arch" == "aarch64" || ! -z "${force_aarch64}" ]];then
-            base64_tar="${base64_aarch64_tar}"
-        else # x86_64
+        if [[ "${local_arch}" == "x86_64" ]];then
+            echo "The current arch is ${local_arch} should be x86_64"
             base64_tar="${base64_x86_64_tar}"
+        else # aarch64
+            echo "The current arch is ${local_arch} should be aarch64"
+            base64_tar="${base64_aarch64_tar}"
         fi
         echo ${base64_tar} | base64 -d - > ${tools_tar}
         tar -zxf ${tools_tar} -C "${analysis_tools_path}" && rm ${tools_tar}
