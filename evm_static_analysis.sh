@@ -103,7 +103,7 @@ main() {
     echo ${runtime_code_str} > ${runtime_code}
     prepare_analysis_tools
     ${gigahorse_generate} ${runtime_code} ${temp_ouput_dir}/
-    # echo "8" > ${temp_ouput_dir}/MaxContextDepth.csv
+    echo "8" > ${temp_ouput_dir}/MaxContextDepth.csv
     result_dir="${temp_ouput_dir}/result_csvs"
     mkdir -p ${result_dir}
     ln -s ${temp_ouput_dir}/bytecode.hex ${result_dir}/bytecode.hex
