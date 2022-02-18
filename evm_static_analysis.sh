@@ -74,7 +74,6 @@ Usage:
     -a file          [Required] path of contract abi json file
     -b file          [Required] path of contract bin file
     -g               [Optional] if use sm3 as hash algorithm
-    -A               [Optional] force script to consider the platform is aarch64
     -h Help
 e.g
     $0 -a HelloWorld.abi -b HelloWorld.bin
