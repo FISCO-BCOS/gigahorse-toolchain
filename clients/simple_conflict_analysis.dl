@@ -3,37 +3,47 @@
 #include "../clientlib/guards.dl"
 #include "../clientlib/vulnerability_macros.dl"
 
-.decl Conflict_InPublicFunction(stmt:Statement, funSign:symbol)
-Conflict_InPublicFunction(stmt, funSign) :-
-  PublicFunctionSelector(fun, funSign),
-  Statement_Block(stmt, block),
-  InFunction(block, fun).
+.decl Conflict_InPublicFunction(stmt:Statement, funcSign:symbol)
+Conflict_InPublicFunction(stmt, funcSign) :-
+  PublicFunctionSelector(func, funcSign),
+  Statement_Function(stmt, func).
+
+.decl Conflict_FunctionWithCallStmt(funSign:symbol)
+Conflict_FunctionWithCallStmt(funSign) :-
+  CallStmt(stmt),
+  Conflict_InPublicFunction(stmt, funSign).
 
 .decl Conflict_EnvOp(stmt:Statement, to:Variable)
 Conflict_EnvOp(stmt, to) :-
   CALLER(stmt, to);ORIGIN(stmt, to);ADDRESS(stmt, to);TIMESTAMP(stmt, to);NUMBER(stmt, to).
 
+// 2
 .decl Conflict_EnvConflict(storageAccessStmt:Statement, pubFunSign:symbol, op:Opcode, slotNum:StorageIndex)
 .output Conflict_EnvConflict
 Conflict_EnvConflict(storageAccessStmt, pubFunSign, op, slotNum) :-
   Conflict_EnvOp(stmt, key),
   StorageAccessStmt(storageAccessStmt, slotNum, key),
   Conflict_InPublicFunction(stmt, pubFunSign),
-  Statement_Opcode(stmt, op).
+  Statement_Opcode(stmt, op),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
 
+// 3
 .decl Conflict_FunArgConflict(storageAccessStmt:Statement, pubFunSign:symbol, argIndex:number, slotNum:StorageIndex)
 .output Conflict_FunArgConflict
 Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   PublicFunctionArg(pubFun, key, argIndex),
-  StorageAccessStmt(storageAccessStmt, slotNum, key),
-  PublicFunctionSelector(pubFun, pubFunSign).
+  StorageAccessStmt(storageAccessStmt, slotNum, key), //看看key如何推导出来, CompositeStorageIndex_Info
+  PublicFunctionSelector(pubFun, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
 
 .decl Conflict_DynaConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex)
-.output Conflict_DynaConflict
+// .output Conflict_DynaConflict
 Conflict_DynaConflict(storageAccessStmt, pubFunSign, slotNum) :-
   StorageAccessStmt(storageAccessStmt, slotNum, _),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
 
+// 0
 .decl Conflict_MixConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex)
 .output Conflict_MixConflict
 Conflict_MixConflict(storageAccessStmt, pubFunSign, slotNum) :-
@@ -41,13 +51,16 @@ Conflict_MixConflict(storageAccessStmt, pubFunSign, slotNum) :-
   !Conflict_FunArgConflict(_, pubFunSign, _, _),
   !Conflict_EnvConflict(_, pubFunSign, _, _).
 
+// 4
 .decl Conflict_ConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:Value)
 .output Conflict_ConsConflict
 Conflict_ConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
   Variable_Value(index, slotNum),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
 
+// 5
 .decl Conflict_NoConflict(pubFunSign:symbol)
 .output Conflict_NoConflict
 Conflict_NoConflict(pubFunSign) :-
@@ -56,20 +69,11 @@ Conflict_NoConflict(pubFunSign) :-
   !Conflict_NoStorageAccessHasContractCalling(pubFunSign),
   PublicFunctionSelector(_, pubFunSign).
 
+// 0
 .decl Conflict_NoStorageAccessHasContractCalling(pubFunSign:symbol)
 .output Conflict_NoStorageAccessHasContractCalling
 Conflict_NoStorageAccessHasContractCalling(pubFunSign) :-
   !Conflict_DynaConflict(_, pubFunSign, _),
   !Conflict_ConsConflict(_, pubFunSign, _),
-  CallStmt(stmt),
-  Conflict_InPublicFunction(stmt, pubFunSign),
+  Conflict_FunctionWithCallStmt(pubFunSign),
   PublicFunctionSelector(_, pubFunSign).
-
-// - slotNum
-//   - 普通状态变量（布尔型和整型等长度固定的类型）：常量
-//   - 动态（映射，数组，字节数组）: hash(key （+ position）)
-
-// 环境变量作为key、常量作为key
-// 函数参数（结构体特殊处理），要有path
-// 其它
-// sload和sstore都要考虑

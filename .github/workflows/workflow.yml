@@ -65,6 +65,8 @@ jobs:
         with:
           name: evm_static_analysis-${{ runner.os }}-${{ runner.arch }}.sh
           path: evm_static_analysis.sh
+      - name: verify conflict analysis result
+        run: cd .\tests\conflict_analysis && python .\verify_conflict.py
 
   build_aarch64:
     name: build on aarch64 ubuntu
@@ -107,3 +109,5 @@ jobs:
         with:
           name: evm_static_analysis-${{ runner.os }}-aarch64.sh
           path: evm_static_analysis.sh
+      - name: verify conflict analysis result
+        run: cd .\tests\conflict_analysis && python .\verify_conflict.py
