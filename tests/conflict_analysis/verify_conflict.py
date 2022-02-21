@@ -33,7 +33,7 @@ ground_true_dict = {
     ],
     "Conflict_FunArgConflict.csv":[
         ["0xeba52dda", "0", "MAP++[0x2]++0"],
-        ["0xc158e6ef", "0", "MAP++[0x2]++0"],
+        ["0xc158e6ef", "1", "MAP++[0x2]++0"],
         ["0xac0f72ac", "0", "ARRAY++[0x1]++0"],
         ["0x9e935dc6", "0", "ARRAY++[0x1]++0"],
         ["0x1bfdff", "0", "MAP++[0x2]++0"]
