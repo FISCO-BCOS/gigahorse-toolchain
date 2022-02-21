@@ -76,6 +76,15 @@ jobs:
         with:
           fetch-depth: 5
           submodules: true
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: souffle-2.2
+          key: deps-aarch64-v1-${{ runner.temp }}-${{ github.base_ref }}-${{ hashFiles('.github/workflows/workflow.yml') }}
+          restore-keys: |
+            deps-aarch64-v1-${{ runner.temp }}-${{ github.base_ref }}-${{ hashFiles('.github/workflows/workflow.yml') }}
+            deps-aarch64-v1-${{ runner.temp }}-${{ github.base_ref }}-
+            deps-aarch64-v1-${{ runner.temp }}-
       - uses: uraimo/run-on-arch-action@v2.1.1
         name: Run commands
         id: runcmd
