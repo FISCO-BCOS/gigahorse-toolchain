@@ -73,7 +73,7 @@ compile_conflict_analysis() {
     echo "Compiling conflict analysis"
     cd tools/conflicts_info_parse
     cargo build --release
-    cp target/release/conflicts_info_parse ../../../${output_dir}/conflicts_info_parse
+    cp target/release/conflicts_info_parse ${output_dir}/conflicts_info_parse
     cd $current_dir
 }
 
