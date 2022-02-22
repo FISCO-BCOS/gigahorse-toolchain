@@ -60,7 +60,7 @@ prepare_analysis_tools() {
             base64_tar="${base64_aarch64_tar}"
         fi
         echo ${base64_tar} | base64 -d - > ${tools_tar}
-        tar -zxf ${tools_tar} -C "${analysis_tools_path}" && rm ${tools_tar}
+        tar -jxf ${tools_tar} -C "${analysis_tools_path}" && rm ${tools_tar}
         chmod u+rx ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
         if [ "${OS}" == "Darwin" ];then
             xattr -d com.apple.quarantine ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
