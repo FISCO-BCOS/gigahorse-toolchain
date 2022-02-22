@@ -3,7 +3,7 @@ set -e
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 current_dir="$(pwd)"
-output_dir=bin/
+output_dir=${script_dir}/bin/
 flags="-static -fopenmp"
 sed_cmd="sed -i"
 base64_cmd="base64 -w0"
