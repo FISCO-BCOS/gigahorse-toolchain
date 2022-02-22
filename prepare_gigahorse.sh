@@ -85,6 +85,7 @@ main() {
         download_compile_souffle
     fi
     compile_gigahorse
+    compile_conflict_analysis
     generate_static_analysis_script
 }
 

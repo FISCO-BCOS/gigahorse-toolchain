@@ -121,6 +121,6 @@ jobs:
           name: evm_static_analysis-${{ runner.os }}-aarch64.sh
           path: evm_static_analysis.sh
       - name: analysis test contract
-        run: ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt.bin
+        run: bash -x ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt.bin
       - name: verify conflict analysis result
         run: cd ./tests/conflict_analysis && python ./verify_conflict.py
