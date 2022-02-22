@@ -112,6 +112,8 @@ jobs:
             uname -a
             source $HOME/.cargo/env
             bash prepare_gigahorse.sh
+            bash -x ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt.bin
+            cd ./tests/conflict_analysis && python ./verify_conflict.py
       - uses: actions/upload-artifact@v2
         with:
           name: tools-${{ runner.os }}-aarch64.tar.gz
@@ -120,7 +122,3 @@ jobs:
         with:
           name: evm_static_analysis-${{ runner.os }}-aarch64.sh
           path: evm_static_analysis.sh
-      - name: analysis test contract
-        run: bash -x ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt.bin
-      - name: verify conflict analysis result
-        run: cd ./tests/conflict_analysis && python ./verify_conflict.py
