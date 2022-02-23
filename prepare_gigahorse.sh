@@ -3,7 +3,7 @@ set -e
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 current_dir="$(pwd)"
-output_dir=bin/
+output_dir=${script_dir}/bin/
 flags="-static -fopenmp"
 sed_cmd="sed -i"
 base64_cmd="base64 -w0"
@@ -73,7 +73,7 @@ compile_conflict_analysis() {
     echo "Compiling conflict analysis"
     cd tools/conflicts_info_parse
     cargo build --release
-    cp target/release/conflicts_info_parse ../../../${output_dir}/
+    cp target/release/conflicts_info_parse ${output_dir}/conflicts_info_parse
     cd $current_dir
 }
 
@@ -85,6 +85,7 @@ main() {
         download_compile_souffle
     fi
     compile_gigahorse
+    compile_conflict_analysis
     generate_static_analysis_script
 }
 
