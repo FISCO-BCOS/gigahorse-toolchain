@@ -54,7 +54,7 @@ ground_true_dict = {
 num_success_analysis = 0
 for file_name in ground_true_dict.keys():
     num_match_ground_true = 0
-    with open("./.fisco/static_analysis_tools/analysis_result/" + file_name, "r") as f:
+    with open("./.fisco/static_analysis_tools/analysis_result/result_csvs/" + file_name, "r") as f:
         lines = f.readlines()
     for i in range(len(ground_true_dict[file_name])):
         stop_flag = True
