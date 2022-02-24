@@ -63,3 +63,4 @@ bin/
 souffle-*/
 generatefacts.spec
 souffle-2.2.tar.gz
+.DS_Store

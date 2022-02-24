@@ -63,7 +63,7 @@ prepare_analysis_tools() {
         tar -jxf ${tools_tar} -C "${analysis_tools_path}" && rm ${tools_tar}
         chmod u+rx ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
         if [ "${OS}" == "Darwin" ];then
-            xattr -d com.apple.quarantine ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
+            xattr -d com.apple.quarantine ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate} || :
         fi
     fi
 }
