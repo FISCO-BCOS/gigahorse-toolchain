@@ -6,9 +6,9 @@ struct S {
 }
 
 struct SS {
-    uint256 a;
+    string a;
     S b;
-    uint256 c;
+    string c;
 }
 
 struct SSS {
