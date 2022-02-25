@@ -40,10 +40,10 @@ ground_true_dict = {
         ["0x1bfdff", "0", "MAP++[0x2]++0"]
     ],
     "Conflict_MixConflict.csv":[
-        ["0x5ed8a780", "MAP++[0x2]++0"],
-        ["0x92bddf08", "ARRAY++[0x1]++0"],
-        ["0x9ba2a7c2", "ARRAY++[0x1]++0"],
-        ["0x7ea33fd1", "ARRAY++[0x5]++0"],
+        ["0x5ed8a780"],
+        ["0x92bddf08"],
+        ["0x9ba2a7c2"],
+        ["0x7ea33fd1"],
     ],
     "Conflict_NoConflict.csv":[
         ["0x16c5ae5e"]
