@@ -128,10 +128,28 @@ contract ConflictTest {
         simpleMap[ss.b.b] = 1; //3, FunArgConflict
     }
 
-    function simpleMapWriteWithPartStructFuncArgKey3(uint256 a, SSS calldata sss, uint256 c)
-        public
-    {
+    function simpleMapWriteWithPartStructFuncArgKey3(
+        uint256 a,
+        SSS calldata sss,
+        uint256 c
+    ) public {
         simpleMap[sss.b.b.b] = 1; //3, FunArgConflict
+    }
+
+    function simpleMapWriteWithPartStructFuncArgKey4(
+        uint256 a,
+        uint256[] calldata b,
+        uint256 c
+    ) public {
+        simpleMap[b[0]] = 1; //3, FunArgConflict
+    }
+
+    function simpleMapWriteWithPartStructFuncArgKey5(
+        uint256 a,
+        uint256[5] calldata b,
+        uint256 c
+    ) public {
+        simpleMap[b[0]] = 1; //3, FunArgConflict
     }
 
     function simpleMapIndirectWriteWithEnvKey() public {
