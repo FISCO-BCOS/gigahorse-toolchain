@@ -41,8 +41,6 @@ ground_true_dict = {
     ],
     "Conflict_MixConflict.csv":[
         ["0x5ed8a780"],
-        ["0x92bddf08"],
-        ["0x9ba2a7c2"],
         ["0x7ea33fd1"],
     ],
     "Conflict_NoConflict.csv":[

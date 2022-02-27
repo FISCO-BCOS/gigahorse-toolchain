@@ -36,6 +36,49 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   PublicFunctionSelector(pubFun, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
+// calldata
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, cons) :-
+  Conflict_CallDataLoadReadsLength(_, _, _, length, argLoc),
+  MLOADFreePtr_To(mloadStmt1, memStart),
+  CALLDATACOPY(_, memStart, _, length),
+  ADDFix(_, memStart, length, shaStart2),
+  MSTORE(mstoreStmt, shaStart2, _),
+  MLOADFreePtr_To(mloadStmt2, shaStart),
+  SHA3(shaStmt, shaStart, _, storeOffsetVar),
+  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+  MLOADSFreePtrUnchanged(mloadStmt1, mloadStmt2),
+  PostDominatesInBlock(shaStmt, mstoreStmt),
+  DataFlows(storeOffsetVar, index),
+  !MemoryStatement_ActualArg(shaStmt, _, 2),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign),
+  Conflict_MSTOREOfConstant(mstoreStmt, mapId, _), 
+  cons = STORAGE_CONSTRUCT("MAP", mapId, 0).
+
+// memory
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, cons) :-
+  Conflict_CallDataLoadReadsLength(_, _, lenLocVar, length, argLoc),
+  ADDFix(_, lenLocVar, _, cdcStart),
+  ADDFix(_, freePtr2, _, memStart),
+  CALLDATACOPY(_, memStart, cdcStart, length),
+  MLOADFreePtr_To(mloadStmt1, freePtr1),
+  MLOADFreePtr_To(_, freePtr2),
+  MLOAD(_, freePtr2, loaded),
+  ADDFix(_, loaded, freePtr1, shaStart2),
+  MSTORE(mstoreStmt, shaStart2, _),
+  MLOADFreePtr_To(mloadStmt2, shaStart),
+  SUB(_, _, shaStart, result),
+  DataFlows(result, len),
+  SHA3(shaStmt, shaStart, len, storeOffsetVar),
+  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+  MLOADSFreePtrUnchanged(mloadStmt1, mloadStmt2),
+  PostDominatesInBlock(shaStmt, mstoreStmt),
+  Conflict_MSTOREOfConstant(mstoreStmt, MapId, _), 
+  DataFlows(storeOffsetVar, index),
+  !MemoryStatement_ActualArg(shaStmt, _, 2),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign),
+  cons = STORAGE_CONSTRUCT("MAP", MapId, 0).
 
 .decl Conflict_MSTOREOfConstant(cdl:Statement, constHex:symbol, constNum:number)
 Conflict_MSTOREOfConstant(ms, constHex, constNum):-
@@ -51,69 +94,17 @@ Conflict_CallDataLoadReadsLength(cdl, cdl2, plusFourVar, lenVar, argLoc):-
   Variable_NumericValue(fourVar, 4),
   CALLDATALOAD(cdl2, plusFourVar, lenVar).
 
-.decl Conflict_FunArgSpecialConflict(storageAccessStmt:Statement,  pubFunSign:symbol, argIndex:number, slotNum:number)
-.output Conflict_FunArgSpecialConflict
-// memory
-Conflict_FunArgSpecialConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, slotNum) :-
-  Conflict_CallDataLoadReadsLength(_, _, argLenLoc, argLenVar, argLoc),
-  ADDFix(_, argLenLoc, _, cdcStart),
-  CALLDATACOPY(_, _, cdcStart, argLenVar),
-  MLOADFreePtr_To(_, freePtr1),
-  MLOADFreePtr_To(_, freePtr2),
-  MLOAD(_, freePtr2, loaded),
-  ADDFix(_, loaded, freePtr1, arg2Start),
-  MSTORE(ms, arg2Start, _),
-  Conflict_MSTOREOfConstant(ms, _, slotNum), 
-  MLOADFreePtr_To(_, freePtr3),
-  SUB(_, arg2Start, freePtr3, result),
-  ADDFix(_, _, result, len),
-  SHA3(sha3, freePtr3, len, index),
-  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
-  !MemoryStatement_ActualArg(sha3, _, 2),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
-  !Conflict_FunctionWithCallStmt(pubFunSign).
-
-// calldata
-Conflict_FunArgSpecialConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, slotNum) :-
-  Conflict_CallDataLoadReadsLength(_, _, argLenLoc, argLenVar, argLoc),
-  ADDFix(_, argLenLoc, _, cdcStart),
-  CALLDATACOPY(_, memStart, cdcStart, argLenVar),
-  ADDFix(_, memStart, argLenVar, arg2Start),
-  MSTORE(ms, arg2Start, _),
-  Conflict_MSTOREOfConstant(ms, _, slotNum), 
-  MLOADFreePtr_To(_, freePtr),
-  SUB(_, arg2Start, freePtr, result),
-  ADDFix(_, _, result, len),
-  SHA3(sha3, freePtr, len, index),
-  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
-  !MemoryStatement_ActualArg(sha3, _, 2),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
-  !Conflict_FunctionWithCallStmt(pubFunSign).
-
-.decl Conflict_DynaConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex)
-.output Conflict_DynaConflict
-Conflict_DynaConflict(storageAccessStmt, pubFunSign, slotNum) :-
-  StorageAccessStmt(storageAccessStmt, slotNum, _),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
-  !Conflict_FunctionWithCallStmt(pubFunSign).
-
-.decl Conflict_DynSpecialConflict(storageAccessStmt:Statement, pubFunSign:symbol, index:Variable)
-.output Conflict_DynSpecialConflict
-Conflict_DynSpecialConflict(storageAccessStmt, pubFunSign, index) :-
-  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
-  !Variable_Value(index, _),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
-  !Conflict_FunctionWithCallStmt(pubFunSign).
-
 // 0
 .decl Conflict_MixConflict(storageAccessStmt:Statement, pubFunSign:symbol)
 .output Conflict_MixConflict
 Conflict_MixConflict(storageAccessStmt, pubFunSign) :-
-  Conflict_DynSpecialConflict(storageAccessStmt, pubFunSign, _),
-  !Conflict_FunArgConflict(_, pubFunSign, _, _),
-  !Conflict_FunArgSpecialConflict(_, pubFunSign, _, _),
-  !Conflict_EnvConflict(_, pubFunSign, _, _),
-  !Conflict_ConsSpcialConflict(_, pubFunSign, _, _).
+  StorageAccessStmt(storageAccessStmt, _, _),
+  !Conflict_FunArgConflict(storageAccessStmt, _, _, _),
+  !Conflict_EnvConflict(storageAccessStmt, _, _, _),
+  !Conflict_ConsSpcialConflict(storageAccessStmt, _, _, _),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  PublicFunctionSelector(_, pubFunSign).
+
 
 // 4
 .decl Conflict_ConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:Value)
@@ -137,16 +128,20 @@ Conflict_ConsSpcialConflict(storageAccessStmt, pubFunSign, slotNum, key) :-
 .decl Conflict_NoConflict(pubFunSign:symbol)
 .output Conflict_NoConflict
 Conflict_NoConflict(pubFunSign) :-
-  !Conflict_DynSpecialConflict(_, pubFunSign, _),
-  !Conflict_ConsConflict(_, pubFunSign, _),
-  !Conflict_NoStorageAccessHasContractCalling(pubFunSign),
+  !Conflict_StorageAccessFunction(pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign),
+  PublicFunctionSelector(_, pubFunSign).
+
+.decl Conflict_StorageAccessFunction(pubFunSign:symbol)
+Conflict_StorageAccessFunction(pubFunSign) :-
+  (SLOAD(storageAccessStmt, _, _) ; SSTORE(storageAccessStmt, _, _)),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   PublicFunctionSelector(_, pubFunSign).
 
 // 0
 .decl Conflict_NoStorageAccessHasContractCalling(pubFunSign:symbol)
 .output Conflict_NoStorageAccessHasContractCalling
 Conflict_NoStorageAccessHasContractCalling(pubFunSign) :-
-  !Conflict_DynaConflict(_, pubFunSign, _),
-  !Conflict_ConsConflict(_, pubFunSign, _),
+  !Conflict_StorageAccessFunction(pubFunSign),
   Conflict_FunctionWithCallStmt(pubFunSign),
   PublicFunctionSelector(_, pubFunSign).
