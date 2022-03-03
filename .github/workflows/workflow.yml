@@ -26,7 +26,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-latest]
+        os: [ubuntu-16.04, macos-latest]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -122,3 +122,28 @@ jobs:
         with:
           name: evm_static_analysis-${{ runner.os }}-aarch64.sh
           path: evm_static_analysis.sh
+
+  build_with_centos:
+    name: build_with_centos
+    runs-on: ubuntu-20.04
+    container:
+      image: docker.io/centos:7
+      volumes:
+        - /github/home/.hunter:/github/home/.hunter
+        - /__w/FISCO-BCOS:/__w/FISCO-BCOS
+    steps:
+      - name: install CentOS dependencies
+        run: |
+          yum install -y epel-release centos-release-scl
+          yum install -y git make gcc gcc-c++ glibc-static glibc-devel cmake3 ccache llvm-toolset-7 devtoolset-7 libzstd-devel zlib-devel flex bison python-devel python3-devel
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 5
+      - name: configure and compile
+        run: |
+          pip3 install pyinstaller
+          pyinstaller -Fs generatefacts
+      - uses: actions/upload-artifact@v2
+        with:
+          name: generatefacts.zip
+          path: dist/generatefacts
