@@ -135,7 +135,7 @@ jobs:
       - name: install CentOS dependencies
         run: |
           yum install -y epel-release centos-release-scl
-          yum install -y git make gcc gcc-c++ glibc-static glibc-devel cmake3 ccache llvm-toolset-7 devtoolset-7 libzstd-devel zlib-devel flex bison python-devel python3-devel
+          yum install -y git make gcc gcc-c++ glibc-static glibc-devel cmake3 ccache llvm-toolset-7 devtoolset-7 libzstd-devel zlib-devel flex bison python-devel python3-devel python3-setuptools python3-wheel
       - uses: actions/checkout@v2
         with:
           fetch-depth: 5
