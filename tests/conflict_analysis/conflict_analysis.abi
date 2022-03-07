@@ -372,6 +372,198 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "x",
+				"type": "uint256"
+			},
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "a",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "b",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct S",
+				"name": "s",
+				"type": "tuple"
+			}
+		],
+		"name": "simpleMapWriteWithPartStructFuncArgKey2",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "a",
+				"type": "uint256"
+			},
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "a",
+						"type": "uint256"
+					},
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "a",
+								"type": "string"
+							},
+							{
+								"components": [
+									{
+										"internalType": "uint256",
+										"name": "a",
+										"type": "uint256"
+									},
+									{
+										"internalType": "uint256",
+										"name": "b",
+										"type": "uint256"
+									}
+								],
+								"internalType": "struct S",
+								"name": "b",
+								"type": "tuple"
+							},
+							{
+								"internalType": "string",
+								"name": "c",
+								"type": "string"
+							}
+						],
+						"internalType": "struct SS",
+						"name": "b",
+						"type": "tuple"
+					},
+					{
+						"internalType": "uint256",
+						"name": "c",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct SSS",
+				"name": "sss",
+				"type": "tuple"
+			},
+			{
+				"internalType": "uint256",
+				"name": "c",
+				"type": "uint256"
+			}
+		],
+		"name": "simpleMapWriteWithPartStructFuncArgKey3",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "x",
+				"type": "uint256"
+			},
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "a",
+						"type": "string"
+					},
+					{
+						"components": [
+							{
+								"internalType": "uint256",
+								"name": "a",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "b",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct S",
+						"name": "b",
+						"type": "tuple"
+					},
+					{
+						"internalType": "string",
+						"name": "c",
+						"type": "string"
+					}
+				],
+				"internalType": "struct SS",
+				"name": "ss",
+				"type": "tuple"
+			}
+		],
+		"name": "simpleMapWriteWithPartStructFuncArgKey3",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "a",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "b",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "c",
+				"type": "uint256"
+			}
+		],
+		"name": "simpleMapWriteWithPartStructFuncArgKey4",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "a",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[5]",
+				"name": "b",
+				"type": "uint256[5]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "c",
+				"type": "uint256"
+			}
+		],
+		"name": "simpleMapWriteWithPartStructFuncArgKey5",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "simpleStruct",
 		"outputs": [

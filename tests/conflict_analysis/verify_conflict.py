@@ -3,21 +3,25 @@ import os
 
 # Ground true of test cases
 ground_true_dict = {
-    "Conflict_ConsConflict.csv":[
+    "Conflict_BasicVarConsConflict.csv":[
         ["0xd9fb343f", "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c"],
         ["0xe2a57b9a", "0x6"],
         ["0xd3619794", "0x0"],
         ["0xac0f72ac", "0x1"],
         ["0xb4a0b5e6", "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0"],
+        ["0x7ea33fd1", "0x5"],
         ["0x845aba0c", "0x6"],
         ["0x92bddf08", "0x1"],
         ["0x9ba2a7c2", "0x1"],
         ["0x9e935dc6", "0x1"],
         ["0x6a446b88", "0xabd6e7cb50984ff9c2f3e18a2660c3353dadf4e3291deeb275dae2cd1e44fe05"],
-        ["0x7ea33fd1", "0x5"],
         ["0x398fbc22", "0x0"],
         ["0x4db0cdb2", "0x5"],
         ["0x11eaad06", "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0"]
+    ],
+    "Conflict_DynaVarConsConflict.csv":[
+        ["0x92bddf08", "ARRAY++[0x1]++0", "0"],
+        ["0x9ba2a7c2", "ARRAY++[0x1]++0", "0"]
     ],
     "Conflict_EnvConflict.csv":[
         ["0xa8f3ceeb", "NUMBER", "MAP++[0x2]++0"],
@@ -34,14 +38,16 @@ ground_true_dict = {
     ],
     "Conflict_FunArgConflict.csv":[
         ["0xeba52dda", "0", "MAP++[0x2]++0"],
+        ["0xe407048d", "2", "MAP++[0x2]++0"],
+        ["0xe407048d", "0", "MAP++[0x2]++0"],
         ["0xc158e6ef", "1", "MAP++[0x2]++0"],
         ["0xac0f72ac", "0", "ARRAY++[0x1]++0"],
+        ["0xb0e58bbc", "1", "MAP++[0x2]++0"],
         ["0x9e935dc6", "0", "ARRAY++[0x1]++0"],
         ["0x1bfdff", "0", "MAP++[0x2]++0"]
     ],
     "Conflict_MixConflict.csv":[
-        ["0x5ed8a780"],
-        ["0x7ea33fd1"],
+        ["0x5ed8a780"]
     ],
     "Conflict_NoConflict.csv":[
         ["0x16c5ae5e"]

@@ -66,7 +66,7 @@ jobs:
           name: evm_static_analysis-${{ runner.os }}-${{ runner.arch }}.sh
           path: evm_static_analysis.sh
       - name: analysis test contract
-        run: ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt.bin
+        run: ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt-6-10.bin
       - name: verify conflict analysis result
         run: python ./tests/conflict_analysis/verify_conflict.py
 
@@ -112,7 +112,7 @@ jobs:
             uname -a
             source $HOME/.cargo/env
             bash prepare_gigahorse.sh
-            ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt.bin
+            ./evm_static_analysis.sh -a ./tests/conflict_analysis/conflict_analysis.abi -b ./tests/conflict_analysis/conflict_analysis-opt-6-10.bin
             python ./tests/conflict_analysis/verify_conflict.py
       - uses: actions/upload-artifact@v2
         with:

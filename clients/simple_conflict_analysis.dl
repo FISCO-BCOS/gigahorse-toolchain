@@ -3,6 +3,7 @@
 #include "../clientlib/guards.dl"
 #include "../clientlib/vulnerability_macros.dl"
 
+// Helper
 .decl Conflict_InPublicFunction(stmt:Statement, funcSign:symbol)
 Conflict_InPublicFunction(stmt, funcSign) :-
   PublicFunctionSelector(func, funcSign),
@@ -13,10 +14,32 @@ Conflict_FunctionWithCallStmt(funSign) :-
   CallStmt(stmt),
   Conflict_InPublicFunction(stmt, funSign).
 
+.decl Conflict_StorageAccessInFunction(storageAccessStmt:Statement, pubFunSign:symbol)
+Conflict_StorageAccessInFunction(storageAccessStmt, pubFunSign) :-
+  (SLOAD(storageAccessStmt, _, _) ; SSTORE(storageAccessStmt, _, _)),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  PublicFunctionSelector(_, pubFunSign).
+
 .decl Conflict_EnvOp(stmt:Statement, to:Variable)
 Conflict_EnvOp(stmt, to) :-
   CALLER(stmt, to);ORIGIN(stmt, to);ADDRESS(stmt, to);TIMESTAMP(stmt, to);NUMBER(stmt, to).
 
+.decl Conflict_MSTOREOfConstant(cdl:Statement, constHex:symbol, constNum:number)
+Conflict_MSTOREOfConstant(ms, constHex, constNum):-
+  MSTORE(ms, _, consVar),
+  Variable_Value(consVar, constHex),
+  Variable_NumericValue(consVar, constNum).
+
+.decl Conflict_CallDataLoadReadsLength(cdl:Statement, cdl2:Statement, cdlArrayVar:Variable, lenVar:Variable, argLoc:number)
+Conflict_CallDataLoadReadsLength(cdl, cdl2, plusFourVar, lenVar, argLoc):-
+  CALLDATALOAD(cdl, argIdVar, toVar),
+  Variable_NumericValue(argIdVar, argLoc),
+  ADDFix(_, toVar, fourVar, plusFourVar),
+  Variable_NumericValue(fourVar, 4),
+  CALLDATALOAD(cdl2, plusFourVar, lenVar).
+
+
+// Rrelated to access to dynamic state variables (i.e., mapping, dynamic array)
 // 2
 .decl Conflict_EnvConflict(storageAccessStmt:Statement, pubFunSign:symbol, op:Opcode, slotNum:StorageIndex)
 .output Conflict_EnvConflict
@@ -80,42 +103,43 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, cons) 
   !Conflict_FunctionWithCallStmt(pubFunSign),
   cons = STORAGE_CONSTRUCT("MAP", MapId, 0).
 
-.decl Conflict_MSTOREOfConstant(cdl:Statement, constHex:symbol, constNum:number)
-Conflict_MSTOREOfConstant(ms, constHex, constNum):-
-  MSTORE(ms, _, consVar),
-  Variable_Value(consVar, constHex),
-  Variable_NumericValue(consVar, constNum).
-
-.decl Conflict_CallDataLoadReadsLength(cdl:Statement, cdl2:Statement, cdlArrayVar:Variable, lenVar:Variable, argLoc:number)
-Conflict_CallDataLoadReadsLength(cdl, cdl2, plusFourVar, lenVar, argLoc):-
-  CALLDATALOAD(cdl, argIdVar, toVar),
-  Variable_NumericValue(argIdVar, argLoc),
-  ADDFix(_, toVar, fourVar, plusFourVar),
-  Variable_NumericValue(fourVar, 4),
-  CALLDATALOAD(cdl2, plusFourVar, lenVar).
-
-// 0
-.decl Conflict_MixConflict(storageAccessStmt:Statement, pubFunSign:symbol)
-.output Conflict_MixConflict
-Conflict_MixConflict(storageAccessStmt, pubFunSign) :-
-  StorageAccessStmt(storageAccessStmt, _, _),
-  !Conflict_FunArgConflict(storageAccessStmt, _, _, _),
-  !Conflict_EnvConflict(storageAccessStmt, _, _, _),
-  !Conflict_ConsSpcialConflict(storageAccessStmt, _, _, _),
+// 4 
+.decl Conflict_DynaVarConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex, key:number)
+.output Conflict_DynaVarConsConflict
+Conflict_DynaVarConsConflict(storageAccessStmt, pubFunSign, slotNum, key) :-
+  StorageAccessStmt(storageAccessStmt, slotNum, keyVar),
+  Variable_Value(keyVar, keyHex),
+  key = @hex_to_number(keyHex),
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
-  PublicFunctionSelector(_, pubFunSign).
+  !Conflict_FunctionWithCallStmt(pubFunSign).
 
 
+// 0 
+// Functions with unresolved storage access area(s)
+.decl Conflict_MixConflict(pubFunSign:symbol)
+.output Conflict_MixConflict
+Conflict_MixConflict(pubFunSign) :-
+  PublicFunctionSelector(_, pubFunSign),
+  all = count: Conflict_StorageAccessInFunction(_, pubFunSign),
+  known1 = count: Conflict_BasicVarConsConflict(_, pubFunSign, _),
+  known2 = count: Conflict_EnvConflict(_, pubFunSign, _, _),
+  known3 = count: Conflict_FunArgConflict(_, pubFunSign, _, _),
+  known4 = count: Conflict_DynaVarConsConflict(_, pubFunSign, _, _),
+  known = known1 + known2 + known3 + known4,
+  all > known.
+
+
+// Rrelated to access to basic state variables (i.e., string, int, address)
 // 4
-.decl Conflict_ConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:Value)
-.output Conflict_ConsConflict
-Conflict_ConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
+.decl Conflict_BasicVarConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:Value)
+.output Conflict_BasicVarConsConflict
+Conflict_BasicVarConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
   Variable_Value(index, slotNum),
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
-Conflict_ConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
+Conflict_BasicVarConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
   PHITrans(shaDef, index),
   SHA3_1ARG(_, arg, shaDef),
@@ -123,33 +147,21 @@ Conflict_ConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
-// 4
-.decl Conflict_ConsSpcialConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex, key:Value)
-.output Conflict_ConsSpcialConflict
-Conflict_ConsSpcialConflict(storageAccessStmt, pubFunSign, slotNum, key) :-
-  Variable_Value(keyVar, key),
-  StorageAccessStmt(storageAccessStmt, slotNum, keyVar),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
-  !Conflict_FunctionWithCallStmt(pubFunSign).
 
+
+// No storage access opcode in the function
 // 5
 .decl Conflict_NoConflict(pubFunSign:symbol)
 .output Conflict_NoConflict
 Conflict_NoConflict(pubFunSign) :-
-  !Conflict_StorageAccessFunction(pubFunSign),
+  !Conflict_StorageAccessInFunction(_, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign),
-  PublicFunctionSelector(_, pubFunSign).
-
-.decl Conflict_StorageAccessFunction(pubFunSign:symbol)
-Conflict_StorageAccessFunction(pubFunSign) :-
-  (SLOAD(storageAccessStmt, _, _) ; SSTORE(storageAccessStmt, _, _)),
-  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   PublicFunctionSelector(_, pubFunSign).
 
 // 0
 .decl Conflict_NoStorageAccessHasContractCalling(pubFunSign:symbol)
 .output Conflict_NoStorageAccessHasContractCalling
 Conflict_NoStorageAccessHasContractCalling(pubFunSign) :-
-  !Conflict_StorageAccessFunction(pubFunSign),
+  !Conflict_StorageAccessInFunction(_, pubFunSign),
   Conflict_FunctionWithCallStmt(pubFunSign),
   PublicFunctionSelector(_, pubFunSign).

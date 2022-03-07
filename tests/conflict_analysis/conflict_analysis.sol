@@ -1,4 +1,5 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.6.0;
+pragma experimental ABIEncoderV2;
 
 struct S {
     uint256 a;
@@ -32,7 +33,7 @@ contract ConflictTest {
     string public str;
     S public simpleStruct;
 
-    constructor() {
+    constructor() public {
         fixedSizeVar = 1;
         dynaArray.push(1);
         simpleMap[1] = 1;
@@ -60,11 +61,11 @@ contract ConflictTest {
     }
 
     function dynaArrayReadWithFuncArgKey(uint256 i) public returns (uint256) {
-        return dynaArray[i]; //3, FunArgConflict
+        return dynaArray[i]; //3, FunArgConflict 4, ConsConflict
     }
 
     function dynaArrayWriteWithFuncArgKey(uint256 i) public {
-        dynaArray[i] = 1; //3, FunArgConflict
+        dynaArray[i] = 1; //3, FunArgConflict 4, ConsConflict
     }
 
     function simpleMapReadWithConsKey() public returns (uint256) {
@@ -166,7 +167,7 @@ contract ConflictTest {
     }
 
     function complexMapWriteWithConsKey() public {
-        complexMap[3] = S(1, 2); //4, ConsConflict
+        complexMap[3] = S(1, 2); //4, ConsConflict  0, MixConflict
     }
 
     // Special (Struct/String)
