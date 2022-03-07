@@ -115,6 +115,14 @@ Conflict_ConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
+Conflict_ConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
+  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+  PHITrans(shaDef, index),
+  SHA3_1ARG(_, arg, shaDef),
+  Variable_Value(arg, slotNum),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
+
 // 4
 .decl Conflict_ConsSpcialConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex, key:Value)
 .output Conflict_ConsSpcialConflict
