@@ -104,12 +104,11 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, cons) 
   cons = STORAGE_CONSTRUCT("MAP", MapId, 0).
 
 // 4 
-.decl Conflict_DynaVarConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex, key:number)
+.decl Conflict_DynaVarConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex, key:Value)
 .output Conflict_DynaVarConsConflict
 Conflict_DynaVarConsConflict(storageAccessStmt, pubFunSign, slotNum, key) :-
   StorageAccessStmt(storageAccessStmt, slotNum, keyVar),
-  Variable_Value(keyVar, keyHex),
-  key = @hex_to_number(keyHex),
+  Variable_Value(keyVar, key),
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 

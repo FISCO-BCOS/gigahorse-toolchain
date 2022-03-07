@@ -4,24 +4,26 @@ import os
 # Ground true of test cases
 ground_true_dict = {
     "Conflict_BasicVarConsConflict.csv":[
-        ["0xd9fb343f", "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c"],
-        ["0xe2a57b9a", "0x6"],
+        ["0xe2a57b9a", "0x7"],
         ["0xd3619794", "0x0"],
         ["0xac0f72ac", "0x1"],
         ["0xb4a0b5e6", "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0"],
-        ["0x7ea33fd1", "0x5"],
-        ["0x845aba0c", "0x6"],
+        ["0x7ea33fd1", "0x6"],
+        ["0x845aba0c", "0x7"],
         ["0x92bddf08", "0x1"],
         ["0x9ba2a7c2", "0x1"],
         ["0x9e935dc6", "0x1"],
-        ["0x6a446b88", "0xabd6e7cb50984ff9c2f3e18a2660c3353dadf4e3291deeb275dae2cd1e44fe05"],
+        ["0x6a446b88", "0x1471eb6eb2c5e789fc3de43f8ce62938c7d1836ec861730447e2ada8fd81017b"],
         ["0x398fbc22", "0x0"],
-        ["0x4db0cdb2", "0x5"],
-        ["0x11eaad06", "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0"]
+        ["0x4db0cdb2", "0x6"],
+        ["0x11eaad06", "0xa9bc9a3a348c357ba16b37005d7e6b3236198c0e939f4af8c5f19b8deeb8ebc0"],
+        ["0x9aa88eec", "0x149a91bf4c41725a2a136ad8d174381b837c1dc936a6e6bdd39f733175126b28"],
+        ["0x5d3c131c", "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c"]
     ],
     "Conflict_DynaVarConsConflict.csv":[
-        ["0x92bddf08", "ARRAY++[0x1]++0", "0"],
-        ["0x9ba2a7c2", "ARRAY++[0x1]++0", "0"]
+        ["0x92bddf08", "ARRAY++[0x1]++0", "0x0"],
+        ["0x9ba2a7c2", "ARRAY++[0x1]++0", "0x1"],
+        ["0xf40f719f", "MAP++[0x4]++0", "0x7465737400000000000000000000000000000000000000000000000000000000"]
     ],
     "Conflict_EnvConflict.csv":[
         ["0xa8f3ceeb", "NUMBER", "MAP++[0x2]++0"],
@@ -47,7 +49,10 @@ ground_true_dict = {
         ["0x1bfdff", "0", "MAP++[0x2]++0"]
     ],
     "Conflict_MixConflict.csv":[
-        ["0x5ed8a780"]
+        ["0x5ed8a780"],
+        ["0xd62c3d7c"],
+        ["0x74d19b4b"],
+        ["0x3894de57"]
     ],
     "Conflict_NoConflict.csv":[
         ["0x16c5ae5e"]

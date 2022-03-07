@@ -29,6 +29,7 @@ contract ConflictTest {
     uint256[] public dynaArray;
     mapping(uint256 => uint256) public simpleMap;
     mapping(address => uint256) public simpleMapForTestEnv;
+    mapping(string => uint256) public simpleMapForTestConsStr;
     mapping(uint256 => S) public complexMap;
     string public str;
     S public simpleStruct;
@@ -44,36 +45,44 @@ contract ConflictTest {
 
     // Fixed-sized（Booleans/Integers/Fixed Point Numbers/Address/Fixed-size byte arrays/...）
     function fixedSizeVarRead() public returns (uint256) {
-        return fixedSizeVar; //4, ConsConflict
+        return fixedSizeVar; //4, BasicVarConsConflict
     }
 
     function fixedSizeVarWrite() public {
-        fixedSizeVar = 2; //4, ConsConflict
+        fixedSizeVar = 2; //4, BasicVarConsConflict
     }
 
     // Dynamically-sized (Dynamic Array/Mapping)
     function dynaArrayReadWithConsKey() public returns (uint256) {
-        return dynaArray[0]; //4, ConsConflict
+        return dynaArray[0]; //4, BasicVarConsConflict DynaVarConsConflict
     }
 
     function dynaArrayWriteWithConsKey() public {
-        dynaArray[0] = 3; //4, ConsConflict
+        dynaArray[1] = 3; //4, BasicVarConsConflict DynaVarConsConflict
     }
 
     function dynaArrayReadWithFuncArgKey(uint256 i) public returns (uint256) {
-        return dynaArray[i]; //3, FunArgConflict 4, ConsConflict
+        return dynaArray[i]; //3, FunArgConflict 4, BasicVarConsConflict 
     }
 
     function dynaArrayWriteWithFuncArgKey(uint256 i) public {
-        dynaArray[i] = 1; //3, FunArgConflict 4, ConsConflict
+        dynaArray[i] = 1; //3, FunArgConflict 4, BasicVarConsConflict 
     }
 
     function simpleMapReadWithConsKey() public returns (uint256) {
-        return simpleMap[1]; //4, ConsConflict
+        return simpleMap[1]; //4, BasicVarConsConflict 
     }
 
-    function simpleMapWriteWithConsKey() public {
-        simpleMap[2] = 3; //4, ConsConflict
+    function simpleMapWriteWithIntConsKey() public {
+        simpleMap[2] = 3; //4, BasicVarConsConflict 
+    }
+
+    function simpleMapWriteWithAddressConsKey() public {
+        simpleMapForTestEnv[address(0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359)] = 1;  //4, BasicVarConsConflict 
+    }
+
+    function simpleMapWriteWithStringConsKey() public {
+        simpleMapForTestConsStr["test"] = 1; //DynaVarConsConflict
     }
 
     function simpleMapReadWithEnvKey(uint256 x) public returns (uint256) {
@@ -126,7 +135,7 @@ contract ConflictTest {
     function simpleMapWriteWithPartStructFuncArgKey3(uint256 x, SS calldata ss)
         public
     {
-        simpleMap[ss.b.b] = 1; //3, FunArgConflict
+        simpleMap[ss.b.b] = 1; //0, MixConflict
     }
 
     function simpleMapWriteWithPartStructFuncArgKey3(
@@ -134,7 +143,7 @@ contract ConflictTest {
         SSS calldata sss,
         uint256 c
     ) public {
-        simpleMap[sss.b.b.b] = 1; //3, FunArgConflict
+        simpleMap[sss.b.b.b] = 1; //0, MixConflict
     }
 
     function simpleMapWriteWithPartStructFuncArgKey4(
@@ -142,7 +151,7 @@ contract ConflictTest {
         uint256[] calldata b,
         uint256 c
     ) public {
-        simpleMap[b[0]] = 1; //3, FunArgConflict
+        simpleMap[b[0]] = 1; //0, MixConflict
     }
 
     function simpleMapWriteWithPartStructFuncArgKey5(
@@ -163,28 +172,28 @@ contract ConflictTest {
     }
 
     function complexMapReadWithConsKey() public returns (uint256) {
-        return complexMap[1].a; //4, ConsConflict
+        return complexMap[1].a; //4, BasicVarConsConflict
     }
 
     function complexMapWriteWithConsKey() public {
-        complexMap[3] = S(1, 2); //4, ConsConflict  0, MixConflict
+        complexMap[3] = S(1, 2); //4, BasicVarConsConflict
     }
 
     // Special (Struct/String)
     function StrRead() public returns (string memory) {
-        return str; //4, ConsConflict
+        return str; //4, BasicVarConsConflict
     }
 
     function StrWrite() public {
-        str = "efg"; //4, ConsConflict
+        str = "efg"; //4, BasicVarConsConflict
     }
 
     function simpleStructRead() public returns (uint256) {
-        return simpleStruct.a; //4, ConsConflict
+        return simpleStruct.a; //4, BasicVarConsConflict
     }
 
     function simpleStructWrite() public {
-        simpleStruct.a = 2; //4, ConsConflict
+        simpleStruct.a = 2; //4, BasicVarConsConflict
     }
 
     // No storage access
