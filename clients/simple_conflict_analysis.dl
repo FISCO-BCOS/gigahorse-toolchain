@@ -7,7 +7,17 @@
 .decl Conflict_InPublicFunction(stmt:Statement, funcSign:symbol)
 Conflict_InPublicFunction(stmt, funcSign) :-
   PublicFunctionSelector(func, funcSign),
+  Conflict_Statement_Function(stmt, func).
+
+.decl Conflict_Statement_Function(s: Statement, f: Function)
+Conflict_Statement_Function(stmt, func) :-
+  IsFunction(func),
   Statement_Function(stmt, func).
+
+Conflict_Statement_Function(stmt, caller) :-
+  InFunction(block, caller),
+  CallGraphEdge(block, callee),
+  Statement_Function(stmt, callee).
 
 .decl Conflict_FunctionWithCallStmt(funSign:symbol)
 Conflict_FunctionWithCallStmt(funSign) :-
@@ -127,6 +137,15 @@ Conflict_MixConflict(pubFunSign) :-
   known = known1 + known2 + known3 + known4,
   all > known.
 
+.decl Conflict_Info(pubFunSign:symbol, storageAccessOpcode:number, basicVarConsConflict:number, envConflict:number, funArgConflict:number, dynaVarConsConflict: number)
+.output Conflict_Info
+Conflict_Info(pubFunSign, storageAccessOpcode, basicVarConsConflict, envConflict, funArgConflict, dynaVarConsConflict) :-
+  PublicFunctionSelector(_, pubFunSign),
+  storageAccessOpcode = count: Conflict_StorageAccessInFunction(_, pubFunSign),
+  basicVarConsConflict = count: Conflict_BasicVarConsConflict(_, pubFunSign, _),
+  envConflict = count: Conflict_EnvConflict(_, pubFunSign, _, _),
+  funArgConflict = count: Conflict_FunArgConflict(_, pubFunSign, _, _),
+  dynaVarConsConflict = count: Conflict_DynaVarConsConflict(_, pubFunSign, _, _).
 
 // Rrelated to access to basic state variables (i.e., string, int, address)
 // 4
