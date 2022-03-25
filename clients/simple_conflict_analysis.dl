@@ -19,9 +19,17 @@ Conflict_Statement_Function(stmt, caller) :-
   CallGraphEdge(block, callee),
   Statement_Function(stmt, callee).
 
+.decl Conflict_CallStmt(stmt:Statement)
+Conflict_CallStmt(stmt) :- Statement_Opcode(stmt, "CALL").
+Conflict_CallStmt(stmt) :- Statement_Opcode(stmt, "CALLCODE").
+Conflict_CallStmt(stmt) :- Statement_Opcode(stmt, "DELEGATECALL").
+Conflict_CallStmt(stmt) :- Statement_Opcode(stmt, "STATICCALL").
+Conflict_CallStmt(stmt) :- Statement_Opcode(stmt, "CREATE").
+Conflict_CallStmt(stmt) :- Statement_Opcode(stmt, "CREATE2").
+
 .decl Conflict_FunctionWithCallStmt(funSign:symbol)
 Conflict_FunctionWithCallStmt(funSign) :-
-  CallStmt(stmt),
+  Conflict_CallStmt(stmt),
   Conflict_InPublicFunction(stmt, funSign).
 
 .decl Conflict_StorageAccessInFunction(storageAccessStmt:Statement, pubFunSign:symbol)
@@ -69,6 +77,17 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   PublicFunctionSelector(pubFun, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
+// part
+// Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, slotNum) :-
+//   Conflict_CallDataLoadReadsLength(_, _, _, lenVar, argLoc),
+//   MSTORE(_, array, lenVar),
+//   ArrayIndexAccess(array, indexVar, _),
+//   MLOAD(_, indexVar, key),
+//   StorageAccessStmt(storageAccessStmt, slotNum, key), 
+//   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+//   !Conflict_FunctionWithCallStmt(pubFunSign).
+
+
 // calldata
 Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, cons) :-
   Conflict_CallDataLoadReadsLength(_, _, _, length, argLoc),
@@ -112,6 +131,26 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, cons) 
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign),
   cons = STORAGE_CONSTRUCT("MAP", MapId, 0).
+
+// struct contains members of string
+// Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
+//   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+//   PHITrans(shaDef, index),
+//   SHA3_1ARG(_, arg, shaDef),
+//   SHA3_1ARG(_, _, arg),
+//   SLOAD(stmt, arg, _),
+//   Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+//   Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
+
+// struct contains members of string[]
+// Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
+//   SLOAD(stmt, key, _),
+//   Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+//   SHA3_1ARG(_, key, shaDef),
+//   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+//   DataFlows(shaDef, index),
+//   Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+//   Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
 
 // 4 
 .decl Conflict_DynaVarConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex, key:Value)
@@ -164,8 +203,6 @@ Conflict_BasicVarConsConflict(storageAccessStmt, pubFunSign, slotNum) :-
   Variable_Value(arg, slotNum),
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
-
-
 
 // No storage access opcode in the function
 // 5
