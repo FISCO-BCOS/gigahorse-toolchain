@@ -77,15 +77,61 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   PublicFunctionSelector(pubFun, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
+Conflict_FunArgConflict(storageAccessStmt2, pubFunSign, argIndex, slotNum) :-
+  Conflict_FunArgConflict(storageAccessStmt1, pubFunSign, argIndex, slotNum),
+  SHA3(storageAccessStmt1, _, _, index),
+  (SLOAD(storageAccessStmt2, index, _) ; SSTORE(storageAccessStmt2, index, _)),
+  Conflict_InPublicFunction(storageAccessStmt2, pubFunSign),
+  Statement_Block(storageAccessStmt1, block1),
+  !Statement_Block(storageAccessStmt2, block1).
+
+Conflict_FunArgConflict(storageAccessStmt3, pubFunSign, argIndex, slotNum) :-
+  Conflict_FunArgConflict(storageAccessStmt1, pubFunSign, argIndex, slotNum),
+  SHA3(storageAccessStmt1, _, _, index),
+  (SLOAD(storageAccessStmt2, _, _) ; SSTORE(storageAccessStmt2, _, _)),
+  (SLOAD(storageAccessStmt3, index, _) ; SSTORE(storageAccessStmt3, index, _)),
+  HappensAfter(storageAccessStmt2, storageAccessStmt1),
+  HappensAfter(storageAccessStmt3, storageAccessStmt2),
+  storageAccessStmt2 != storageAccessStmt3,
+  Conflict_InPublicFunction(storageAccessStmt3, pubFunSign),
+  Statement_Block(storageAccessStmt1, block1),
+  Statement_Block(storageAccessStmt2, block1),
+  Statement_Block(storageAccessStmt3, block1).
+
+Conflict_FunArgConflict(storageAccessStmt2, pubFunSign, argIndex, slotNum) :-
+  Conflict_FunArgConflict(storageAccessStmt1, pubFunSign, argIndex, slotNum),
+  SHA3(storageAccessStmt1, _, _, shaDef),
+  ADDFix(_, shaDef, constVar, key),
+  Variable_Value(constVar, _),
+  (SLOAD(storageAccessStmt2, key, _) ; SSTORE(storageAccessStmt2, key, _)),
+  Conflict_InPublicFunction(storageAccessStmt2, pubFunSign),
+  Statement_Block(storageAccessStmt1, block1),
+  !Statement_Block(storageAccessStmt2, block1).
+
+Conflict_FunArgConflict(storageAccessStmt3, pubFunSign, argIndex, slotNum) :-
+  Conflict_FunArgConflict(storageAccessStmt1, pubFunSign, argIndex, slotNum),
+  SHA3(storageAccessStmt1, _, _, shaDef),
+  ADDFix(_, shaDef, constVar, key),
+  Variable_Value(constVar, _),
+  (SLOAD(storageAccessStmt2, _, _) ; SSTORE(storageAccessStmt2, _, _)),
+  (SLOAD(storageAccessStmt3, key, _) ; SSTORE(storageAccessStmt3, key, _)),
+  HappensAfter(storageAccessStmt2, storageAccessStmt1),
+  HappensAfter(storageAccessStmt3, storageAccessStmt2),
+  storageAccessStmt2 != storageAccessStmt3,
+  Conflict_InPublicFunction(storageAccessStmt3, pubFunSign),
+  Statement_Block(storageAccessStmt1, block1),
+  Statement_Block(storageAccessStmt2, block1),
+  Statement_Block(storageAccessStmt3, block1).
+
 // part
-// Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, slotNum) :-
-//   Conflict_CallDataLoadReadsLength(_, _, _, lenVar, argLoc),
-//   MSTORE(_, array, lenVar),
-//   ArrayIndexAccess(array, indexVar, _),
-//   MLOAD(_, indexVar, key),
-//   StorageAccessStmt(storageAccessStmt, slotNum, key), 
-//   Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
-//   !Conflict_FunctionWithCallStmt(pubFunSign).
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, slotNum) :-
+  Conflict_CallDataLoadReadsLength(_, _, _, lenVar, argLoc),
+  MSTORE(_, array, lenVar),
+  ArrayIndexAccess(array, indexVar, _),
+  MLOAD(_, indexVar, key),
+  StorageAccessStmt(storageAccessStmt, slotNum, key), 
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
 
 
 // calldata
@@ -133,24 +179,24 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, (argLoc - 4) / 32, cons) 
   cons = STORAGE_CONSTRUCT("MAP", MapId, 0).
 
 // struct contains members of string
-// Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
-//   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
-//   PHITrans(shaDef, index),
-//   SHA3_1ARG(_, arg, shaDef),
-//   SHA3_1ARG(_, _, arg),
-//   SLOAD(stmt, arg, _),
-//   Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
-//   Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
+  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+  PHITrans(shaDef, index),
+  SHA3_1ARG(_, arg, shaDef),
+  SHA3_1ARG(_, _, arg),
+  SLOAD(stmt, arg, _),
+  Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
 
 // struct contains members of string[]
-// Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
-//   SLOAD(stmt, key, _),
-//   Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
-//   SHA3_1ARG(_, key, shaDef),
-//   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
-//   DataFlows(shaDef, index),
-//   Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
-//   Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
+  SLOAD(stmt, key, _),
+  Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+  SHA3_1ARG(_, key, shaDef),
+  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+  DataFlows(shaDef, index),
+  Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
 
 // 4 
 .decl Conflict_DynaVarConsConflict(storageAccessStmt:Statement, pubFunSign:symbol, slotNum:StorageIndex, key:Value)
