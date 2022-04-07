@@ -151,7 +151,7 @@ contract ConflictTest {
         uint256[] calldata b,
         uint256 c
     ) public {
-        simpleMap[b[0]] = 1; //0, MixConflict
+        simpleMap[b[0]] = 1; //3, FunArgConflict
     }
 
     function simpleMapWriteWithPartStructFuncArgKey5(

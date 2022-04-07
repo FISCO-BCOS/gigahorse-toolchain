@@ -46,11 +46,11 @@ ground_true_dict = {
         ["0xac0f72ac", "0", "ARRAY++[0x1]++0"],
         ["0xb0e58bbc", "1", "MAP++[0x2]++0"],
         ["0x9e935dc6", "0", "ARRAY++[0x1]++0"],
-        ["0x1bfdff", "0", "MAP++[0x2]++0"]
+        ["0x1bfdff", "0", "MAP++[0x2]++0"],
+        ["0xd62c3d7c", "1", "MAP++[0x2]++0"]
     ],
     "Conflict_MixConflict.csv":[
         ["0x5ed8a780"],
-        ["0xd62c3d7c"],
         ["0x74d19b4b"],
         ["0x3894de57"]
     ],
