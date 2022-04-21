@@ -43,6 +43,11 @@ Conflict_StorageAccessInFunction(storageAccessStmt, pubFunSign) :-
 Conflict_EnvOp(stmt, to) :-
   CALLER(stmt, to);ORIGIN(stmt, to);ADDRESS(stmt, to);TIMESTAMP(stmt, to);NUMBER(stmt, to).
 
+Conflict_EnvOp(stmt, to) :-
+  (CALLER(stmt, env);ORIGIN(stmt, env);ADDRESS(stmt, env)),
+  (AND(_, env, twenty, to);AND(_, twenty, env, to)),
+  Variable_Value(twenty, "0xffffffffffffffffffffffffffffffffffffffff").
+
 .decl Conflict_MSTOREOfConstant(cdl:Statement, constHex:symbol, constNum:number)
 Conflict_MSTOREOfConstant(ms, constHex, constNum):-
   MSTORE(ms, _, consVar),
@@ -62,12 +67,59 @@ Conflict_CallDataLoadReadsLength(cdl, cdl2, plusFourVar, lenVar, argLoc):-
 // 2：存储访问的key是环境参数（op）
 .decl Conflict_EnvConflict(storageAccessStmt:Statement, pubFunSign:symbol, op:Opcode, slotNum:StorageIndex)
 .output Conflict_EnvConflict
+
+// 一般情况
 Conflict_EnvConflict(storageAccessStmt, pubFunSign, op, slotNum) :-
   Conflict_EnvOp(stmt, key),
   StorageAccessStmt(storageAccessStmt, slotNum, key),
   Conflict_InPublicFunction(stmt, pubFunSign),
   Statement_Opcode(stmt, op),
   !Conflict_FunctionWithCallStmt(pubFunSign).
+
+// 环境信息流到编译器构建的函数，再流到存储访问key的位置（address版本v1）
+Conflict_EnvConflict(storageAccessStmt, pubFunSign, op, slotNum) :-
+  Conflict_EnvOp(stmt, envOpAct),
+  ActualArgs(caller, envOpAct, pos),
+  FormalArgs(fn, envOpFor, pos),
+  CallGraphEdge(caller, fn),
+  (AND(_, envOpFor, twenty, key);AND(_, twenty, envOpFor, key)),
+  Variable_Value(twenty, "0xffffffffffffffffffffffffffffffffffffffff"),
+  StorageAccessStmt(storageAccessStmt, slotNum, key),
+  Conflict_InPublicFunction(stmt, pubFunSign),
+  Statement_Opcode(stmt, op),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
+
+// 环境信息流到编译器构建的函数，再流到存储访问key的位置（address版本v2）
+Conflict_EnvConflict(storageAccessStmt, pubFunSign, op, cons) :-
+  Conflict_EnvOp(stmt, envOpAct),
+  ActualArgs(caller, envOpAct, pos1),
+  FormalArgs(fn, envOpFor, pos1),
+  ActualArgs(caller, indexAct, pos2),
+  FormalArgs(fn, indexFor, pos2),
+  CallGraphEdge(caller, fn),
+  (AND(_, envOpFor, twenty, key);AND(_, twenty, envOpFor, key)),
+  Variable_Value(twenty, "0xffffffffffffffffffffffffffffffffffffffff"),
+  SHA3_2ARG(storageAccessStmt, key, indexFor, _),
+  Conflict_InPublicFunction(stmt, pubFunSign),
+  Statement_Opcode(stmt, op),
+  !Conflict_FunctionWithCallStmt(pubFunSign),
+  Variable_Value(indexAct, mapId),
+  cons = STORAGE_CONSTRUCT("MAP", mapId, 0).
+
+// 一个哈希结果直接用作两次存储访问的key，第二次存储访问的冲突域信息沿用第一次存储访问的冲突域信息，两次存储访问在同一个基本块
+Conflict_EnvConflict(storageAccessStmt3, pubFunSign, op, cons) :-
+  Conflict_EnvConflict(storageAccessStmt1, pubFunSign, op, cons),
+  SHA3(storageAccessStmt1, _, _, index),
+  (SLOAD(storageAccessStmt2, _, _) ; SSTORE(storageAccessStmt2, _, _)),
+  (SLOAD(storageAccessStmt3, index, _) ; SSTORE(storageAccessStmt3, index, _)),
+  HappensAfter(storageAccessStmt2, storageAccessStmt1),
+  HappensAfter(storageAccessStmt3, storageAccessStmt2),
+  storageAccessStmt2 != storageAccessStmt3,
+  Conflict_InPublicFunction(storageAccessStmt3, pubFunSign),
+  Statement_Block(storageAccessStmt1, block1),
+  Statement_Block(storageAccessStmt2, block1),
+  Statement_Block(storageAccessStmt3, block1).
+
 
 // 3：存储访问的key是函数参数
 .decl Conflict_FunArgConflict(storageAccessStmt:Statement, pubFunSign:symbol, argIndex:number, slotNum:StorageIndex)
@@ -80,7 +132,18 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   PublicFunctionSelector(pubFun, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
-// 函数参数流到编译器构建的函数，再流到存储访问key的位置
+// 函数参数是address类型
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
+  PublicFunctionArg(pubFun, funarg, argIndex),
+  (AND(_, funarg, twenty1, addResult);AND(_, twenty1, funarg, addResult)),
+  Variable_Value(twenty1, "0xffffffffffffffffffffffffffffffffffffffff"),
+  (AND(_, addResult, twenty2, key);AND(_, twenty2, addResult, key)),
+  Variable_Value(twenty2, "0xffffffffffffffffffffffffffffffffffffffff"),
+  StorageAccessStmt(storageAccessStmt, slotNum, key), 
+  PublicFunctionSelector(pubFun, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign).
+
+// 函数参数流到编译器构建的函数，再流到存储访问key的位置（普通版本）
 Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   PublicFunctionArg(pubFun, funcArg, argIndex),
   ActualArgs(caller, funcArg, pos),
@@ -90,14 +153,36 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   PublicFunctionSelector(pubFun, pubFunSign),
   !Conflict_FunctionWithCallStmt(pubFunSign).
 
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, cons) :-
+  PublicFunctionArg(pubFun, funcArg, argIndex),
+  (AND(_, funcArg, twenty1, funcArgAct1);AND(_, twenty1, funcArg, funcArgAct1)),
+  Variable_Value(twenty1, "0xffffffffffffffffffffffffffffffffffffffff"),
+  ActualArgs(caller, funcArgAct1, pos1),
+  FormalArgs(fn, funcArgFor1, pos1),
+  ActualArgs(caller, funcArgAct2, pos2),
+  FormalArgs(fn, funcArgFor2, pos2),
+  CallGraphEdge(caller, fn),
+  (AND(_, funcArgFor1, twenty2, key);AND(_, twenty2, funcArgFor1, key)),
+  Variable_Value(twenty2, "0xffffffffffffffffffffffffffffffffffffffff"),
+  SHA3_2ARG(storageAccessStmt, key, funcArgFor2, _),
+  PublicFunctionSelector(pubFun, pubFunSign),
+  !Conflict_FunctionWithCallStmt(pubFunSign),
+  Variable_Value(funcArgAct2, mapId),
+  cons = STORAGE_CONSTRUCT("MAP", mapId, 0).
+
+
 // 一个哈希结果直接用作两次存储访问的key，第二次存储访问的冲突域信息沿用第一次存储访问的冲突域信息，两次存储访问不在同一个基本块
-Conflict_FunArgConflict(storageAccessStmt2, pubFunSign, argIndex, slotNum) :-
+Conflict_FunArgConflict(storageAccessStmt3, pubFunSign, argIndex, slotNum) :-
   Conflict_FunArgConflict(storageAccessStmt1, pubFunSign, argIndex, slotNum),
   SHA3(storageAccessStmt1, _, _, index),
-  (SLOAD(storageAccessStmt2, index, _) ; SSTORE(storageAccessStmt2, index, _)),
+  (SLOAD(storageAccessStmt2, _, _) ; SSTORE(storageAccessStmt2, _, _)),
+  HappensAfter(storageAccessStmt2, storageAccessStmt1),
+  HappensAfter(storageAccessStmt3, storageAccessStmt2),
+  storageAccessStmt2 != storageAccessStmt3,
+  (SLOAD(storageAccessStmt3, index, _) ; SSTORE(storageAccessStmt3, index, _)),
   Conflict_InPublicFunction(storageAccessStmt2, pubFunSign),
   Statement_Block(storageAccessStmt1, block1),
-  !Statement_Block(storageAccessStmt2, block1).
+  !Statement_Block(storageAccessStmt3, block1).
 
 // 一个哈希结果直接用作两次存储访问的key，第二次存储访问的冲突域信息沿用第一次存储访问的冲突域信息，两次存储访问在同一个基本块
 Conflict_FunArgConflict(storageAccessStmt3, pubFunSign, argIndex, slotNum) :-
@@ -239,6 +324,15 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
 
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
+  Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+  SHA3(stmt, _, _, shaDef1),
+  SHA3_1ARG(_, shaDef1, shaDef2),
+  PHITrans(shaDef2, index),
+  (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
+
+
 // 用函数参数作为key，访问了string数组的元素，这个string数组是一个struct的成员，struct又是mapping状态变量的value
 Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   SLOAD(stmt, key, _),
@@ -274,15 +368,16 @@ Conflict_MixConflict(pubFunSign) :-
   all > known.
 
 // 各种冲突类型的数量
-.decl Conflict_Info(pubFunSign:symbol, storageAccessOpcode:number, basicVarConsConflict:number, envConflict:number, funArgConflict:number, dynaVarConsConflict: number)
+.decl Conflict_Info(pubFunSign:symbol, storageAccessOpcode:number, basicVarConsConflict:number, envConflict:number, funArgConflict:number, dynaVarConsConflict: number, hasContractCall: number)
 .output Conflict_Info
-Conflict_Info(pubFunSign, storageAccessOpcode, basicVarConsConflict, envConflict, funArgConflict, dynaVarConsConflict) :-
+Conflict_Info(pubFunSign, storageAccessOpcode, basicVarConsConflict, envConflict, funArgConflict, dynaVarConsConflict, hasContractCall) :-
   PublicFunctionSelector(_, pubFunSign),
   storageAccessOpcode = count: Conflict_StorageAccessInFunction(_, pubFunSign),
   basicVarConsConflict = count: Conflict_BasicVarConsConflict(_, pubFunSign, _),
   envConflict = count: Conflict_EnvConflict(_, pubFunSign, _, _),
   funArgConflict = count: Conflict_FunArgConflict(_, pubFunSign, _, _),
-  dynaVarConsConflict = count: Conflict_DynaVarConsConflict(_, pubFunSign, _, _).
+  dynaVarConsConflict = count: Conflict_DynaVarConsConflict(_, pubFunSign, _, _),
+  hasContractCall = count: Conflict_FunctionWithCallStmt(pubFunSign).
 
 
 // 4
