@@ -332,6 +332,15 @@ Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
   (SLOAD(storageAccessStmt, index, _) ; SSTORE(storageAccessStmt, index, _)),
   Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
 
+Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
+  Conflict_FunArgConflict(stmt, pubFunSign, argIndex, slotNum),
+  SHA3(stmt, _, _, shaDef1),
+  SLOAD(_, shaDef1, to),
+  SHA3_1ARG(_, shaDef1, shaDef2),
+  ADDFix(_, shaDef2, to, addResult),
+  (SLOAD(storageAccessStmt, addResult, _) ; SSTORE(storageAccessStmt, addResult, _)),
+  Conflict_InPublicFunction(storageAccessStmt, pubFunSign).
+
 
 // 用函数参数作为key，访问了string数组的元素，这个string数组是一个struct的成员，struct又是mapping状态变量的value
 Conflict_FunArgConflict(storageAccessStmt, pubFunSign, argIndex, slotNum) :-
