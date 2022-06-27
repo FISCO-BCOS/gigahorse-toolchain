@@ -3,6 +3,7 @@ set -e
 
 OS=
 use_sm3=
+version="0.2.0"
 analysis_tools_path="$HOME/.fisco/static_analysis_tools/"
 tools_tar="${analysis_tools_path}/tools.tar.gz"
 main_bin="${analysis_tools_path}/main_compiled"
@@ -10,6 +11,7 @@ function_inliner_bin="${analysis_tools_path}/function_inliner_compiled"
 simple_conflict_analysis_bin="${analysis_tools_path}/simple_conflict_analysis_compiled"
 gigahorse_generate="${analysis_tools_path}/generatefacts"
 conflicts_info_parse="${analysis_tools_path}/conflicts_info_parse"
+version_file="${analysis_tools_path}/version"
 local_arch="$(uname -m)"
 
 LOG_WARN() {
@@ -47,8 +49,17 @@ parse_params() {
     done
 }
 
+function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+
 prepare_analysis_tools() {
-    if [[ ! -f "${main_bin}" || ! -f "${function_inliner_bin}" || ! -f "${simple_conflict_analysis_bin}" || ! -f "${gigahorse_generate}" ]];then
+    local need_update="true"
+    if [[ -f "${version_file}" ]];then
+        local_version="$(cat ${version_file})"
+        if [[ "${version}" == "${local_version}" ]];then
+            need_update="false"
+        fi
+    fi
+    if [[ ! -f "${main_bin}" || ! -f "${function_inliner_bin}" || ! -f "${simple_conflict_analysis_bin}" || ! -f "${gigahorse_generate}"  || "${need_update}" == "true" ]];then
         mkdir -p "${analysis_tools_path}"
         base64_aarch64_tar=
         base64_x86_64_tar=
@@ -65,6 +76,7 @@ prepare_analysis_tools() {
         if [ "${OS}" == "Darwin" ];then
             xattr -d com.apple.quarantine ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate} || :
         fi
+        echo "${version}" > "${version_file}"
     fi
 }
 
