@@ -138,6 +138,8 @@ jobs:
           yum install -y git make gcc gcc-c++ glibc-static glibc-devel cmake3 ccache llvm-toolset-7 devtoolset-7 libzstd-devel zlib-devel flex bison python-devel python3-devel python3-setuptools python3-wheel git
           source /opt/rh/devtoolset-7/enable
           alias cmake='cmake3'
+          yum install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-2.noarch.rpm
+          yum install -y git
           git --version
       - name: install rust language
         uses: actions-rs/toolchain@v1
