@@ -57,8 +57,8 @@ compile_gigahorse() {
 
 generate_static_analysis_script() {
     cp -r dist/generatefacts ${output_dir}/
-    cd ${output_dir}
-    tar -jcf tools.tar.bz2 ./*
+    cd ${output_dir}/..
+    tar -jcf tools.tar.bz2 -C ${output_dir} .
     base64_str="$(${base64_cmd} tools.tar.bz2)"
     cd $current_dir
     ${sed_cmd} -f /dev/stdin evm_static_analysis.sh <<EOF
