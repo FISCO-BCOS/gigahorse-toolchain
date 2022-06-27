@@ -56,7 +56,7 @@ compile_gigahorse() {
 }
 
 generate_static_analysis_script() {
-    cp dist/generatefacts ${output_dir}/
+    cp -r dist/generatefacts ${output_dir}/
     cd ${output_dir}
     tar -jcf tools.tar.bz2 ./*
     base64_str="$(${base64_cmd} tools.tar.bz2)"
@@ -79,7 +79,7 @@ compile_conflict_analysis() {
 
 main() {
     pip3 install pyinstaller
-    pyinstaller -Fs generatefacts
+    pyinstaller -s generatefacts
     export PATH=$current_dir/souffle-2.2/build/src:$PATH
     if [ ! -f $current_dir/souffle-2.2/build/src/souffle ];then
         download_compile_souffle
