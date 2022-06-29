@@ -60,7 +60,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: tools-${{ runner.os }}.tar.gz
-          path: bin/tools.tar.bz2
+          path: tools.tar.bz2
       - uses: actions/upload-artifact@v2
         with:
           name: evm_static_analysis-${{ runner.os }}-${{ runner.arch }}.sh
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: tools-${{ runner.os }}-aarch64.tar.gz
-          path: bin/tools.tar.bz2
+          path: tools.tar.bz2
       - uses: actions/upload-artifact@v2
         with:
           name: evm_static_analysis-${{ runner.os }}-aarch64.sh
