@@ -3,7 +3,7 @@ set -e
 
 OS=
 use_sm3=
-version="0.2.0"
+version="0.2.1"
 analysis_tools_path="$HOME/.fisco/static_analysis_tools/"
 tools_tar="${analysis_tools_path}/tools.tar.gz"
 main_bin="${analysis_tools_path}/main_compiled"
