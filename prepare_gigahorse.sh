@@ -73,7 +73,7 @@ compile_conflict_analysis() {
     echo "Compiling conflict analysis"
     cd tools/conflicts_info_parse
     if [[ "$(uname -m)" == "aarch64" ]];then
-        cargo build -j1 --release
+        cargo build -j2 --release
     else
         cargo build --release
     fi
