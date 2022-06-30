@@ -60,6 +60,7 @@ prepare_analysis_tools() {
         fi
     fi
     if [[ ! -f "${main_bin}" || ! -f "${function_inliner_bin}" || ! -f "${simple_conflict_analysis_bin}" || ! -f "${gigahorse_generate}"  || "${need_update}" == "true" ]];then
+        rm -rf "${analysis_tools_path}"
         mkdir -p "${analysis_tools_path}"
         base64_aarch64_tar=
         base64_x86_64_tar=
