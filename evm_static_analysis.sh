@@ -111,10 +111,10 @@ main() {
         mkdir -p ${temp_ouput_dir}
     fi
     runtime_code="${temp_ouput_dir}/runtime_bin"
+    prepare_analysis_tools
     rm -rf "${temp_ouput_dir}" && mkdir -p ${temp_ouput_dir}
     parse_runtime_codes $opcodes
     echo ${runtime_code_str} > ${runtime_code}
-    prepare_analysis_tools
     ${gigahorse_generate} ${runtime_code} ${temp_ouput_dir}/
     echo "8" > ${temp_ouput_dir}/MaxContextDepth.csv
     result_dir="${temp_ouput_dir}/result_csvs"
