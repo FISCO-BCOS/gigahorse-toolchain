@@ -59,7 +59,7 @@ prepare_analysis_tools() {
             need_update="false"
         fi
     fi
-    if [[ ! -f "${main_bin}" || ! -f "${function_inliner_bin}" || ! -f "${simple_conflict_analysis_bin}" || ! -f "${gigahorse_generate}"  || "${need_update}" == "true" ]];then
+    if [[ ! -f "${main_bin}" || ! -f "${function_inliner_bin}" || ! -f "${simple_conflict_analysis_bin}" || ! -f "${gigahorse_generate}" || ! -f "${conflicts_info_parse}" || "${need_update}" == "true" ]];then
         rm -rf "${analysis_tools_path}"
         mkdir -p "${analysis_tools_path}"
         base64_aarch64_tar=
@@ -73,7 +73,7 @@ prepare_analysis_tools() {
         fi
         echo ${base64_tar} | base64 -d - > ${tools_tar}
         tar -jxf ${tools_tar} -C "${analysis_tools_path}" && rm ${tools_tar}
-        chmod u+rx ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate}
+        chmod u+rx ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate} ${conflicts_info_parse}
         if [ "${OS}" == "Darwin" ];then
             xattr -d com.apple.quarantine ${main_bin} ${function_inliner_bin} ${simple_conflict_analysis_bin} ${gigahorse_generate} || :
         fi
